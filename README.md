@@ -2,7 +2,7 @@
 
 ### আমার বাপের রাস্তা · AI + Solana Edition
 
-Built by **Team Crack Platoon**. The game started at Hacktoberfest Hack Day; the **Solana layer** (wallets, on-chain run receipts, on-chain leaderboard) was built for the **MLH Solana Hackathon, Nov 6–8 2026**. Tracks: **Gaming** and **AI**.
+Built by **One Man Army**. The game started at Hacktoberfest Hack Day; the **Solana layer** (wallets, on-chain run receipts, on-chain leaderboard) was built for the **MLH Solana Hackathon, Nov 6–8 2026**. Tracks: **Gaming** and **AI**.
 
 🎮 **[Play the Game](https://starbucksat4thave.github.io/Baper-Rasta-Solana/)**
 
@@ -276,11 +276,7 @@ AI settings, rider name, and the optional public game URL are saved locally. Set
 
 Built by:
 
-- **Shoriful Islam**
 - **Jabir Sharif**
-- **Ekramul Islam**
-- **Md Tasnimul Hasan**
-- **Ishtiaq Mahmud**
 
 ## Contributing
 
