@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>আমার বাপের রাস্তা | Amar Baper Rasta — Crack Platoon</title>
+<title>আমার বাপের রাস্তা | Amar Baper Rasta — One Man Army</title>
 <style>
   :root{
     --bg:#0a0e1a; --bg2:#11172a; --panel:#161d33; --panel2:#1d2647;
@@ -149,7 +149,7 @@
   .result-banner{font-size:18px;font-weight:900;margin:6px 0;color:var(--gold)}
   #countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;font-weight:900;color:var(--gold);text-shadow:0 0 30px #000;z-index:40;pointer-events:none}
 
-  /* ===== START SCREEN (Crack Platoon edition) ===== */
+  /* ===== START SCREEN (One Man Army edition) ===== */
   #startScreen{background:radial-gradient(ellipse at 50% 0%,rgba(255,46,99,.25),transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(8,217,214,.18),transparent 55%),rgba(5,7,16,.94)}
   #startScreen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
   .start-card{position:relative;max-width:480px;width:100%;max-height:94vh;overflow-y:auto;text-align:center;padding:22px 20px 18px;background:linear-gradient(180deg,#171f3a,#0f1528);border:2px solid var(--accent);border-radius:14px;box-shadow:0 0 0 4px rgba(8,217,214,.12),0 0 40px rgba(8,217,214,.25),0 20px 60px rgba(0,0,0,.6);animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2)}
@@ -329,7 +329,7 @@
     <div class="start-bike">🏍️</div>
     <div class="title-bn">আমার বাপের রাস্তা</div>
     <div class="title-en">AMAR BAPER RASTA</div>
-    <div class="team-badge"><span class="by">Team</span><span class="name">Crack Platoon</span></div>
+    <div class="team-badge"><span class="by">Team</span><span class="name">One Man Army</span></div>
     <div class="edition">Powered by <b>Gemma</b> + <b style="color:var(--sol2)">Solana</b> • Solana Hackathon Edition</div>
 
     <div class="info-grid">
@@ -365,7 +365,7 @@
       <button class="btn btn-ghost btn-sm" id="startBoardBtn">🏆 On-chain Board</button>
     </div>
     <button class="btn-link" id="settingsBtn">⚙️ AI Settings</button>
-    <div class="start-foot">MADE WITH ♥ BY <b>CRACK PLATOON</b></div>
+    <div class="start-foot">MADE WITH ♥ BY <b>One Man Army</b></div>
   </div>
 </div>
 
@@ -2003,7 +2003,7 @@ $('mpCancelBtn').onclick = ()=> PEER.leave();
 $('goLobbyBtn').onclick = ()=>{ PEER.openModal(PEER.isHost?true:false); PEER.renderPlayers(); if(!PEER.isHost) PEER.status('Host rematch start korle race shuru hobe…'); };
 function inviteText(){
   const base=publicBase(); const link = base ? '\n'+base+'?join='+PEER.code : '';
-  return '🏍️ Amar Baper Rasta (Crack Platoon) — amar room e join koro!\nRoom code: '+PEER.code+link;
+  return '🏍️ Amar Baper Rasta (One Man Army) — amar room e join koro!\nRoom code: '+PEER.code+link;
 }
 function copyText(t){
   if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
