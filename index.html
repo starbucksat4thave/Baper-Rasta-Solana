@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>আমার বাপের রাস্তা | Amar Baper Rasta — Crack Platoon</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#11172a; --panel:#161d33; --panel2:#1d2647;
+    --primary:#ff2e63; --accent:#08d9d6; --gold:#ffd369; --green:#4ecca3;
+    --text:#eaeaea; --muted:#8a92b8; --border:#2a3556;
+    --danger:#ff4757; --warn:#ffa502;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,'SolaimanLipi','Noto Sans Bengali',sans-serif;background:var(--bg);color:var(--text);user-select:none}
+  #app{display:grid;grid-template-columns:1fr 340px;height:100vh;width:100vw;background:var(--bg)}
+  @media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:1fr auto} }
+
+  /* ===== GAME AREA ===== */
+  #gameWrap{position:relative;background:#000;overflow:hidden}
+  canvas#game{display:block;width:100%;height:100%;background:linear-gradient(180deg,#1a1040 0%,#2d1b5a 40%,#ff6b9d 75%,#ffd369 100%)}
+
+  /* HUD */
+  .hud{position:absolute;top:0;left:0;right:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.8)}
+  .hud-left,.hud-right{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{background:rgba(10,14,26,.7);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:13px;backdrop-filter:blur(6px);display:flex;align-items:center;gap:6px}
+  .chip .ic{font-size:16px}
+  .chip.score{color:var(--gold);border-color:var(--gold)}
+  .chip.fuel{color:var(--accent);border-color:var(--accent)}
+  .chip.fuel.low{color:var(--danger);border-color:var(--danger);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.5}}
+  .chip.speed{color:var(--green)}
+
+  /* Touch controls */
+  .touch{position:absolute;bottom:18px;display:flex;gap:14px;z-index:20}
+  .touch.left{left:18px}.touch.right{right:18px}
+  .tbtn{width:74px;height:74px;border-radius:50%;background:rgba(22,29,51,.75);border:2px solid var(--accent);color:var(--accent);font-size:28px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);font-weight:900}
+  .tbtn:active{background:var(--accent);color:#000;transform:scale(.92)}
+  .tbtn.fly{border-color:var(--gold);color:var(--gold)}
+  .tbtn.fly:active{background:var(--gold);color:#000}
+  @media(min-width:901px){.touch{display:none}}
+
+  /* Top-right mini buttons */
+  .top-actions{position:absolute;top:12px;right:50%;transform:translateX(50%);display:flex;gap:8px;z-index:30;pointer-events:auto}
+  .mini-btn{background:rgba(22,29,51,.85);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);transition:.2s}
+  .mini-btn:hover{background:var(--primary);border-color:var(--primary)}
+  .mini-btn.lang{background:var(--primary);border-color:var(--primary);color:#fff}
+
+  /* ===== AI SIDEBAR ===== */
+  #sidebar{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  @media(max-width:900px){#sidebar{height:auto;max-height:42vh;border-left:none;border-top:2px solid var(--accent)}}
+  .sb-header{padding:14px 16px;background:linear-gradient(135deg,var(--primary),#c41e3a);border-bottom:1px solid var(--border)}
+  .sb-header h2{color:#fff;font-size:16px;display:flex;align-items:center;gap:8px}
+  .sb-header .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .sb-header .sub{font-size:11px;color:#ffd0d0;margin-top:3px}
+
+  .sb-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border)}
+  .sb-tab{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+  .sb-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--panel)}
+  .sb-tab .ic{font-size:14px;display:block;margin-bottom:2px}
+
+  .sb-body{flex:1;overflow-y:auto;padding:12px}
+  .sb-body::-webkit-scrollbar{width:6px}.sb-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  .ai-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;border-left:3px solid var(--accent);animation:slideIn .4s ease}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}}
+  .ai-card.news{border-left-color:var(--gold)}
+  .ai-card.police{border-left-color:var(--danger)}
+  .ai-card.crowd{border-left-color:var(--warn)}
+  .ai-card.tactic{border-left-color:var(--green)}
+  .ai-card .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between}
+  .ai-card .tag .ai-badge{background:linear-gradient(135deg,#08d9d6,#4ecca3);color:#000;padding:1px 6px;border-radius:4px}
+  .ai-card .body{font-size:13px;line-height:1.45;color:var(--text)}
+  .ai-card .body.bn{font-family:'SolaimanLipi','Noto Sans Bengali',sans-serif}
+  .ai-card .meta{font-size:10px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between}
+  .speak-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0 4px}
+
+  .sb-footer{padding:10px 12px;background:var(--bg2);border-top:1px solid var(--border)}
+  .ai-status{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .ai-status .pill{padding:2px 8px;border-radius:10px;background:var(--border);font-weight:700}
+  .ai-status .pill.ok{background:var(--green);color:#000}
+  .ai-status .pill.err{background:var(--danger);color:#fff}
+  .sb-footer button{width:100%;background:linear-gradient(135deg,var(--accent),var(--green));color:#000;border:none;padding:8px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;margin-bottom:6px}
+  .sb-footer button:hover{filter:brightness(1.1)}
+  .sb-footer button.graph{background:linear-gradient(135deg,var(--gold),var(--primary));color:#fff}
+
+  /* ===== MODALS ===== */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+  .overlay.hidden{display:none}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto}
+  .modal h2{color:var(--accent);font-size:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .modal h2.bn{font-family:'SolaimanLipi',sans-serif;color:var(--gold)}
+  .modal .lead{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .modal .lead.bn{font-family:'SolaimanLipi',sans-serif}
+  .btn{display:block;width:100%;padding:12px;border-radius:10px;border:none;font-weight:800;font-size:15px;cursor:pointer;margin-top:10px;transition:.2s}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#c41e3a);color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,46,99,.4)}
+  .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+  .btn-accent{background:linear-gradient(135deg,var(--accent),var(--green));color:#000}
+
+  /* Settings form */
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-size:13px;font-family:inherit}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+  .field .hint{font-size:10px;color:var(--muted);margin-top:3px}
+
+  /* Negotiation */
+  .neg-chat{max-height:280px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
+  .neg-msg{margin-bottom:8px;font-size:13px;line-height:1.4}
+  .neg-msg.police{color:var(--danger);border-left:3px solid var(--danger);padding-left:8px}
+  .neg-msg.player{color:var(--accent);border-left:3px solid var(--accent);padding-left:8px}
+  .neg-msg.ai{color:var(--gold);border-left:3px solid var(--gold);padding-left:8px;font-style:italic}
+  .neg-msg .who{font-size:10px;font-weight:800;text-transform:uppercase;opacity:.7}
+  .neg-options{display:grid;gap:8px}
+  .neg-opt{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;cursor:pointer;font-size:12px;text-align:left;transition:.2s}
+  .neg-opt:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+  .typing{display:inline-block;width:6px;height:13px;background:var(--accent);animation:blink 1s infinite;margin-left:2px;vertical-align:middle}
+
+  /* Graph modal */
+  #graphCanvasWrap{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px;text-align:center}
+  #graphCanvas{max-width:100%;height:auto;border-radius:6px}
+
+  /* Crash flash */
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:5;transition:opacity .1s}
+  #flash.show{opacity:.6}
+
+  /* Toast */
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);color:var(--text);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;opacity:0;transition:.3s;pointer-events:none}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(-8px)}
+
+  .lang-pill{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(255,46,99,.9);color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;z-index:30;pointer-events:none}
+
+  .hidden{display:none!important}
+  .gameover-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+  .gameover-stats .stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+  .gameover-stats .stat .v{font-size:20px;font-weight:900;color:var(--gold)}
+  .gameover-stats .stat .l{font-size:10px;color:var(--muted);text-transform:uppercase}
+  .ai-card.rival{border-left-color:#b388ff}
+  .ai-card .ai-badge.off{background:var(--border);color:var(--muted)}
+  .chip.rival{color:#b388ff;border-color:#b388ff}
+  .chip.mp{color:var(--gold);border-color:var(--gold)}
+  .mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #qrBox{background:#fff;border-radius:12px;padding:12px;display:inline-block;margin:8px auto}
+  #qrBox img,#qrBox svg{display:block;width:220px;height:220px}
+  .code-pill{font-family:monospace;font-size:18px;letter-spacing:2px;color:var(--gold);background:var(--bg);border:1px dashed var(--gold);border-radius:8px;padding:6px 12px;display:inline-block;margin:6px 0}
+  .mp-status{font-size:13px;color:var(--accent);margin:8px 0}
+  .result-banner{font-size:18px;font-weight:900;margin:6px 0;color:var(--gold)}
+  #countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;font-weight:900;color:var(--gold);text-shadow:0 0 30px #000;z-index:40;pointer-events:none}
+
+  /* ===== START SCREEN (Crack Platoon edition) ===== */
+  #startScreen{background:radial-gradient(ellipse at 50% 0%,rgba(255,46,99,.25),transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(8,217,214,.18),transparent 55%),rgba(5,7,16,.94)}
+  #startScreen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+  .start-card{position:relative;max-width:480px;width:100%;max-height:94vh;overflow-y:auto;text-align:center;padding:22px 20px 18px;background:linear-gradient(180deg,#171f3a,#0f1528);border:2px solid var(--accent);border-radius:14px;box-shadow:0 0 0 4px rgba(8,217,214,.12),0 0 40px rgba(8,217,214,.25),0 20px 60px rgba(0,0,0,.6);animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}}
+  .start-card::-webkit-scrollbar{width:6px}.start-card::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .start-bike{font-size:44px;display:inline-block;animation:bikeBob 1.6s ease-in-out infinite;filter:drop-shadow(0 6px 8px rgba(255,46,99,.5))}
+  @keyframes bikeBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+  .title-bn{font-family:'SolaimanLipi','Noto Sans Bengali','Nirmala UI',sans-serif;font-size:clamp(28px,7vw,38px);font-weight:900;line-height:1.15;color:var(--gold);text-shadow:0 0 14px rgba(255,211,105,.55),3px 3px 0 #c41e3a;margin-top:2px}
+  .title-en{font-family:'Courier New',monospace;font-size:clamp(20px,5.4vw,28px);font-weight:900;letter-spacing:4px;color:#fff;margin-top:6px;text-shadow:0 0 12px rgba(8,217,214,.7),2px 2px 0 var(--primary)}
+  .team-badge{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:6px 16px;border-radius:999px;background:linear-gradient(135deg,rgba(255,46,99,.2),rgba(8,217,214,.2));border:1.5px solid var(--primary);box-shadow:0 0 16px rgba(255,46,99,.35)}
+  .team-badge .by{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+  .team-badge .name{font-family:'Courier New',monospace;font-size:17px;font-weight:900;letter-spacing:3px;text-transform:uppercase;background:linear-gradient(90deg,var(--primary),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .edition{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.5px}
+  .edition b{color:var(--accent)}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 14px;text-align:left}
+  @media(max-width:460px){.info-grid{grid-template-columns:1fr}}
+  .info-box{background:rgba(5,7,16,.7);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .info-box h3{font-size:11px;font-weight:900;letter-spacing:1.5px;margin-bottom:8px}
+  .info-box.ctrl h3{color:var(--accent)} .info-box.ai h3{color:var(--gold)}
+  .ctrl-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px;color:var(--text)}
+  .keys{display:flex;gap:3px;min-width:78px}
+  kbd{font-family:'Courier New',monospace;font-size:11px;font-weight:900;color:var(--accent);background:var(--panel2);border:1px solid var(--accent);border-bottom-width:3px;border-radius:5px;padding:1px 6px;min-width:22px;text-align:center}
+  .ai-list{list-style:none;font-size:12px;line-height:1.35}
+  .ai-list li{margin-bottom:6px;padding-left:2px}
+  .btn-start{position:relative;font-size:17px;padding:15px;letter-spacing:1px;animation:startPulse 1.8s ease-in-out infinite;border:2px solid #ff7a98}
+  .btn-start:active{transform:translateY(1px) scale(.98)}
+  @keyframes startPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,46,99,.55)}50%{box-shadow:0 0 0 10px rgba(255,46,99,0)}}
+  .btn-start small{display:block;font-size:11px;font-weight:600;opacity:.85;letter-spacing:0;margin-top:2px}
+  .btn-sm{padding:10px;font-size:13px}
+  .start-card .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn-link{background:none;border:none;color:var(--muted);font-size:12px;padding:10px 6px 2px;margin-top:4px;cursor:pointer;width:100%;font-weight:600}
+  .btn-link:hover{color:var(--accent)}
+  .start-foot{margin-top:10px;font-size:10px;color:var(--muted);letter-spacing:1px}
+  .start-foot b{color:var(--primary)}
+  @media(max-height:700px){.start-bike{font-size:32px}.info-grid{margin:10px 0}.team-badge{margin-top:8px}}
+  @media(prefers-reduced-motion:reduce){.start-bike,.btn-start,.start-card{animation:none}}
+
+  /* ===== MULTIPLAYER ROOM ===== */
+  input,textarea{user-select:text;-webkit-user-select:text}
+  .name-row{display:flex;align-items:center;gap:8px;margin:2px 0 8px;text-align:left}
+  .name-row label{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .name-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:14px;font-weight:700}
+  .name-row input:focus{outline:none;border-color:var(--accent)}
+  .room-box{background:var(--bg);border:2px dashed var(--gold);border-radius:12px;padding:12px;margin:10px 0}
+  .room-box .rl{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--muted)}
+  .room-code{font-family:'Courier New',monospace;font-size:38px;font-weight:900;letter-spacing:8px;color:var(--gold);text-shadow:0 0 14px rgba(255,211,105,.5);margin:4px 0 8px}
+  .room-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .room-actions .btn{margin-top:0;padding:9px;font-size:13px}
+  .plist-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:1px;color:var(--accent);margin:12px 0 6px;text-align:left}
+  #playerList{display:grid;gap:6px;text-align:left}
+  .prow{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;animation:slideIn .3s ease}
+  .prow .dot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}
+  .prow .pn{font-weight:800;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow .tag{font-size:9px;font-weight:900;letter-spacing:1px;padding:2px 7px;border-radius:5px;background:var(--border);color:var(--text)}
+  .prow .tag.host{background:var(--gold);color:#000}.prow .tag.you{background:var(--accent);color:#000}
+  .prow.empty{opacity:.35;border-style:dashed;justify-content:center;font-size:12px}
+  details.qr-more{margin-top:10px;text-align:left;font-size:12px;color:var(--muted)}
+  details.qr-more summary{cursor:pointer;font-weight:700;padding:4px 0}
+  .go-board{list-style:none;text-align:left;margin:6px 0}
+  .go-board li{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:5px;font-size:13px;font-weight:700}
+  .go-board li.me{border-color:var(--accent)}
+  .go-board .rk{font-size:16px;width:26px}.go-board .sc{margin-left:auto;color:var(--gold)}
+
+  /* ===== SOLANA ===== */
+  :root{--sol1:#9945ff;--sol2:#14f195}
+  .mini-btn.sol{border-color:var(--sol1);color:#d9c2ff}
+  .mini-btn.sol.on{background:linear-gradient(135deg,var(--sol1),#5b2bb5);color:#fff}
+  .btn-sol{background:linear-gradient(135deg,var(--sol1),var(--sol2));color:#0a0e1a}
+  .btn-sol:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn-sol:disabled,.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;filter:none}
+  .sb-footer button.sol{background:linear-gradient(135deg,var(--sol1),var(--sol2));color:#0a0e1a}
+  .chain-box{background:linear-gradient(135deg,rgba(153,69,255,.14),rgba(20,241,149,.08));border:1px solid var(--sol1);border-radius:12px;padding:10px 12px;margin:10px 0 4px;text-align:left}
+  .chain-head{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#cbb2ff;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
+  .chain-head .net{color:var(--sol2)}
+  .chain-status{font-size:12px;line-height:1.45;color:var(--text);word-break:break-word}
+  .chain-status a,.sol-modal a{color:var(--sol2)}
+  .chain-box .mode-row .btn{margin-top:8px}
+  .sol-modal h3{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#cbb2ff;margin:14px 0 6px}
+  .wallet-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px}
+  .wallet-card .addr{font-family:'Courier New',monospace;font-weight:900;color:var(--sol2);word-break:break-all}
+  .wallet-card .bal{color:var(--gold);font-weight:800}
+  .sol-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sol-btns .btn{margin-top:8px;padding:9px;font-size:13px}
+  .lb-list{list-style:none;margin:0}
+  .lb-list li{display:grid;grid-template-columns:28px 1fr auto;gap:6px;align-items:center;padding:7px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-bottom:5px;font-size:12px}
+  .lb-list li.me{border-color:var(--sol2)}
+  .lb-list .rk{font-size:15px;font-weight:900;text-align:center}
+  .lb-list .who b{font-size:13px}.lb-list .who small{display:block;color:var(--muted);font-size:10px;font-family:'Courier New',monospace}
+  .lb-list .sc{color:var(--gold);font-weight:900;text-align:right}.lb-list .sc a{display:block;font-size:10px;font-weight:600}
+  .lb-empty{font-size:12px;color:var(--muted);padding:8px 0}
+  .vchk{color:var(--sol2);font-size:10px;font-weight:900}
+  #solModal{z-index:110}
+</style>
+<script src="lib/peerjs.min.js"></script>
+<script>if(typeof Peer==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');}</script>
+<script>if(typeof Peer==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"><\/script>');}</script>
+<script src="lib/qrcode.js"></script>
+<script>if(typeof qrcode==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"><\/script>');}</script>
+<!-- Solana: @solana/web3.js 1.98.4 (local copy first, then CDN) -->
+<script src="lib/solana-web3.min.js"></script>
+<script>if(typeof solanaWeb3==='undefined'){document.write('<script src="https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js"><\/script>');}</script>
+</head>
+<body>
+<div id="app">
+  <!-- ===== GAME ===== -->
+  <div id="gameWrap">
+    <canvas id="game"></canvas>
+    <div id="flash"></div>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-left">
+        <div class="chip score"><span class="ic">🏆</span><span id="scoreVal">0</span></div>
+        <div class="chip speed"><span class="ic">⚡</span><span id="speedVal">0</span> km/h</div>
+      </div>
+      <div class="hud-right">
+        <div class="chip fuel" id="fuelChip"><span class="ic">⛽</span><span id="fuelVal">100</span>%</div>
+        <div class="chip"><span class="ic">🛩️</span><span id="flyVal">0</span></div>
+        <div class="chip"><span class="ic">💥</span><span id="crashVal">0</span></div>
+      </div>
+    </div>
+    <div class="hud" style="top:44px">
+      <div class="hud-left">
+        <div class="chip rival hidden" id="rivalChip"><span class="ic">🤖</span><span id="rivalVal">—</span></div>
+        <div class="chip mp hidden" id="mpChip"><span class="ic">📱</span><span id="mpVal">—</span></div>
+      </div>
+    </div>
+    <div id="countdown" class="hidden"></div>
+
+    <!-- Language toggle + menu -->
+    <div class="top-actions">
+      <button class="mini-btn lang" id="langBtn">EN / বাংলা</button>
+      <button class="mini-btn" id="menuBtn">⚙️</button>
+      <button class="mini-btn" id="graphBtn">📊 Graph</button>
+      <button class="mini-btn sol" id="walletBtn">◎ Wallet</button>
+    </div>
+
+    <!-- Touch controls -->
+    <div class="touch left">
+      <button class="tbtn" id="btnLeft">◀</button>
+      <button class="tbtn" id="btnRight">▶</button>
+    </div>
+    <div class="touch right">
+      <button class="tbtn fly" id="btnFly">🛩️</button>
+      <button class="tbtn" id="btnDown">▼</button>
+    </div>
+  </div>
+
+  <!-- ===== AI SIDEBAR ===== -->
+  <aside id="sidebar">
+    <div class="sb-header">
+      <h2><span class="dot"></span> 🤖 AI Co-Pilot <span style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px">Gemma</span></h2>
+      <div class="sub" id="sbSub">Live commentary • News • Negotiation</div>
+    </div>
+    <div class="sb-tabs">
+      <div class="sb-tab active" data-tab="feed"><span class="ic">📰</span>Feed</div>
+      <div class="sb-tab" data-tab="news"><span class="ic">📺</span>News</div>
+      <div class="sb-tab" data-tab="tactic"><span class="ic">🎯</span>Tactics</div>
+      <div class="sb-tab" data-tab="graph"><span class="ic">📊</span>Graph</div>
+    </div>
+    <div class="sb-body" id="sbBody"><!-- AI cards injected here --></div>
+    <div class="sb-footer">
+      <div class="ai-status">
+        <span>AI:</span><span class="pill" id="aiPill">checking…</span>
+        <span style="margin-left:auto" id="aiModel">—</span>
+      </div>
+      <button id="testAiBtn">🧪 Test AI</button>
+      <button class="graph" id="graphBtn2">📊 Export Graph PNG</button>
+      <button class="sol" id="sbBoardBtn">◎ Solana Leaderboard</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ===== START SCREEN ===== -->
+<div class="overlay" id="startScreen">
+  <div class="start-card">
+    <div class="start-bike">🏍️</div>
+    <div class="title-bn">আমার বাপের রাস্তা</div>
+    <div class="title-en">AMAR BAPER RASTA</div>
+    <div class="team-badge"><span class="by">Team</span><span class="name">Crack Platoon</span></div>
+    <div class="edition">Powered by <b>Gemma</b> + <b style="color:var(--sol2)">Solana</b> • Solana Hackathon Edition</div>
+
+    <div class="info-grid">
+      <div class="info-box ctrl">
+        <h3>🎮 CONTROLS</h3>
+        <div class="ctrl-row"><span class="keys"><kbd>←</kbd><kbd>→</kbd></span> Steer <small style="color:var(--muted)">/ A D</small></div>
+        <div class="ctrl-row"><span class="keys"><kbd>W</kbd><kbd>SPACE</kbd></span> Fly ⛽</div>
+        <div class="ctrl-row"><span class="keys"><kbd>S</kbd></span> Dive down</div>
+        <div class="ctrl-row">📱 Touch buttons on mobile</div>
+      </div>
+      <div class="info-box ai">
+        <h3>🤖 AI FEATURES</h3>
+        <ul class="ai-list">
+          <li>📰 Live news from Gemma</li>
+          <li>🚔 Police &amp; crowd negotiation</li>
+          <li>🎯 Real-time tactical tips</li>
+          <li>🏁 Gemma Rival racer</li>
+          <li>👥 Team Multiplayer Rooms</li>
+          <li>◎ Runs + AI headline stamped on Solana</li>
+          <li>🏆 On-chain leaderboard</li>
+        </ul>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-start" id="startBtn">🚀 START GAME<small>Race vs Gemma Rival • press Enter ↵</small></button>
+    <div class="name-row"><label for="playerName">👤 YOUR NAME</label><input id="playerName" maxlength="14" placeholder="Rider" autocomplete="off"></div>
+    <div class="mode-row">
+      <button class="btn btn-accent btn-sm" id="hostBtn">👥 Create Room</button>
+      <button class="btn btn-ghost btn-sm" id="joinBtn">🔗 Join Room</button>
+    </div>
+    <div class="mode-row">
+      <button class="btn btn-sol btn-sm" id="startWalletBtn">◎ Connect Wallet</button>
+      <button class="btn btn-ghost btn-sm" id="startBoardBtn">🏆 On-chain Board</button>
+    </div>
+    <button class="btn-link" id="settingsBtn">⚙️ AI Settings</button>
+    <div class="start-foot">MADE WITH ♥ BY <b>CRACK PLATOON</b></div>
+  </div>
+</div>
+
+<!-- ===== MULTIPLAYER LOBBY ===== -->
+<div class="overlay hidden" id="mpModal">
+  <div class="modal" style="text-align:center">
+    <h2 style="justify-content:center" id="mpTitle">👥 Team Lobby</h2>
+    <div id="mpJoinView" class="hidden">
+      <p class="lead">Host er kach theke 6-letter room code nao, ekhane likho.<br><span style="font-size:11px">Enter the room code your host shared.</span></p>
+      <div class="name-row"><label for="joinName">👤 YOUR NAME</label><input id="joinName" maxlength="14" placeholder="Rider" autocomplete="off"></div>
+      <div class="field"><input id="joinCode" maxlength="6" placeholder="K7Q2XM" autocomplete="off" style="text-align:center;font-size:26px;letter-spacing:6px;text-transform:uppercase;font-family:'Courier New',monospace;font-weight:900"></div>
+      <button class="btn btn-accent" id="joinGoBtn">🔗 Join Room</button>
+    </div>
+    <div id="mpRoomView" class="hidden">
+      <div class="room-box">
+        <div class="rl">ROOM CODE</div>
+        <div class="room-code" id="roomCode">······</div>
+        <div class="room-actions" id="hostShare">
+          <button class="btn btn-ghost" id="copyCodeBtn">📋 Copy Code</button>
+          <button class="btn btn-accent" id="shareBtn">📤 Share Invite</button>
+        </div>
+        <div class="hint" id="roomHint" style="font-size:11px;color:var(--muted);margin-top:8px">Share this code with your team members.</div>
+      </div>
+      <div class="plist-head"><span>👥 PLAYERS</span><span id="pCount">0/6</span></div>
+      <div id="playerList"></div>
+      <details class="qr-more" id="qrDetails">
+        <summary>📷 Show QR code (optional)</summary>
+        <div style="text-align:center">
+          <div id="qrBox">—</div>
+          <div class="field" style="text-align:left;margin-top:8px">
+            <label>Public game URL (used in QR / invite link)</label>
+            <input id="publicUrl" placeholder="https://yourname.github.io/amar-baper-rasta/">
+            <div class="hint">Auto-filled when the game is hosted online. Not needed if teammates use the room code.</div>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="mp-status" id="mpStatus">—</div>
+    <button class="btn btn-primary hidden" id="mpStartBtn">🏁 START RACE</button>
+    <button class="btn btn-ghost" id="mpCancelBtn">⬅ Leave / Back</button>
+  </div>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
+<div class="overlay hidden" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ AI Settings</h2>
+    <p class="lead">Configure Gemma via Ollama (local) or Google AI Studio (cloud). No key needed for Ollama.</p>
+
+    <div class="field">
+      <label>AI Provider</label>
+      <select id="providerSel">
+        <option value="ollama">🦙 Ollama (Local — Free, Private)</option>
+        <option value="google">🌐 Google AI Studio (Cloud — needs API key)</option>
+        <option value="auto">⚡ Auto (Ollama first, then Google)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Ollama URL</label>
+      <input id="ollamaUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
+      <div class="hint">Run: <code>ollama pull gemma2:2b</code> then <code>ollama serve</code></div>
+    </div>
+
+    <div class="field">
+      <label>Ollama Model</label>
+      <input id="ollamaModel" value="gemma2:2b" placeholder="gemma2:2b">
+      <div class="hint">Options: gemma2:2b, gemma2:9b, gemma:2b-instruct</div>
+    </div>
+
+    <div class="field">
+      <label>Google AI Studio API Key</label>
+      <input id="googleKey" type="password" placeholder="AIza...">
+      <div class="hint">Get a free key at <code>aistudio.google.com/app/apikey</code>. Provider "Auto" uses Ollama first, then this key.</div>
+    </div>
+    <div class="field">
+      <label>Gemini API Model</label>
+      <select id="googleModelSel">
+        <option value="gemma-3-4b-it">gemma-3-4b-it (open-weight Gemma, recommended)</option>
+        <option value="gemma-3-12b-it">gemma-3-12b-it (Gemma, smarter)</option>
+        <option value="gemma-3-1b-it">gemma-3-1b-it (Gemma, fastest)</option>
+        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+      </select>
+      <div class="hint">If a model isn't available, pick another and press Save &amp; Test.</div>
+    </div>
+
+    <div class="field">
+      <label>Speech Voice / Voice Output</label>
+      <select id="voiceSel"><option value="off">Off</option><option value="en" selected>English</option><option value="bn">Bangla (if available)</option></select>
+    </div>
+
+    <div class="field">
+      <label>UI Language</label>
+      <select id="uiLangSel"><option value="en">English</option><option value="bn">বাংলা</option><option value="both" selected>Both (English + Bangla)</option></select>
+    </div>
+
+    <button class="btn btn-accent" id="saveSettingsBtn">💾 Save & Test Connection</button>
+    <button class="btn btn-ghost" id="closeSettingsBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== NEGOTIATION MODAL ===== -->
+<div class="overlay hidden" id="negModal">
+  <div class="modal">
+    <h2 id="negTitle">🚔 POLICE STOP!</h2>
+    <p class="lead" id="negLead">The traffic police have caught you. Talk your way out — or bribe, flirt, threaten...</p>
+    <div class="neg-chat" id="negChat"></div>
+    <div class="neg-options" id="negOptions"></div>
+    <button class="btn btn-ghost" id="negFleeBtn" style="margin-top:8px">🏃 Flee (risky!)</button>
+  </div>
+</div>
+
+<!-- ===== GRAPH MODAL ===== -->
+<div class="overlay hidden" id="graphModal">
+  <div class="modal" style="max-width:760px">
+    <h2>📊 Graphify — AI Workflow Graph</h2>
+    <p class="lead">Live graph of how your game state, player actions, AI responses, and Solana transactions connect.</p>
+    <div id="graphCanvasWrap"><canvas id="graphCanvas" width="700" height="380"></canvas></div>
+    <button class="btn btn-accent" id="dlGraphBtn">⬇️ Download PNG</button>
+    <button class="btn btn-ghost" id="closeGraphBtn">Close</button>
+  </div>
+</div>
+
+<!-- ===== SOLANA HUB ===== -->
+<div class="overlay hidden" id="solModal">
+  <div class="modal sol-modal">
+    <h2 style="color:#cbb2ff">◎ Solana Hub</h2>
+    <p class="lead">Every run can be stamped on Solana as a signed transaction: your score, stats and Gemma's headline, readable by anyone. The leaderboard below is read straight from the chain. No backend.</p>
+
+    <h3>👛 WALLET</h3>
+    <div class="wallet-card" id="solWalletCard">Not connected.</div>
+    <div class="sol-btns" id="solConnectBtns"></div>
+    <div class="sol-btns">
+      <button class="btn btn-ghost" id="solAirdropBtn">🚰 Get devnet SOL</button>
+      <button class="btn btn-ghost" id="solDisconnectBtn">⏏ Disconnect</button>
+    </div>
+    <div class="chain-status" id="solMsg" style="margin-top:6px"></div>
+    <div class="hint" style="font-size:10px;color:var(--muted);margin-top:6px">Phantom / Solflare / Backpack: switch the wallet to <b>Devnet</b> first. No wallet installed? <b>Burner wallet</b> creates a throwaway devnet keypair in this browser. Never send real funds to it.</div>
+
+    <h3>🌐 NETWORK</h3>
+    <div class="field" style="margin-bottom:6px">
+      <select id="solClusterSel">
+        <option value="devnet">Devnet (recommended)</option>
+        <option value="testnet">Testnet</option>
+        <option value="localnet">Localnet (127.0.0.1:8899)</option>
+        <option value="custom">Custom RPC URL</option>
+      </select>
+    </div>
+    <div class="field hidden" id="solRpcField" style="margin-bottom:6px"><input id="solRpcInput" placeholder="https://devnet.helius-rpc.com/?api-key=..."></div>
+    <div class="hint" style="font-size:10px;color:var(--muted)">Leaderboard address (PDA, nobody holds its key): <a id="solLbLink" target="_blank" rel="noopener">—</a></div>
+
+    <h3 style="display:flex;justify-content:space-between;align-items:center">🏆 ON-CHAIN LEADERBOARD <button class="mini-btn" id="solRefreshBtn" style="font-size:10px">↻ Refresh</button></h3>
+    <div id="solBoard"><div class="lb-empty">Loading…</div></div>
+
+    <button class="btn btn-ghost" id="solCloseBtn">Close</button>
+  </div>
+</div>
+
+<!-- ===== GAME OVER ===== -->
+<div class="overlay hidden" id="gameOverScreen">
+  <div class="modal" style="text-align:center">
+    <h2 style="color:var(--danger)">💥 GAME OVER</h2>
+    <p class="lead" id="goLead">Your bike is wrecked. But hey — at least the AI wrote a headline about you.</p>
+    <div class="result-banner" id="goResult"></div>
+    <div class="gameover-stats" id="goStats"></div>
+    <div class="ai-card news" id="goNews" style="text-align:left"><div class="tag"><span>📰 BREAKING NEWS</span><span class="ai-badge">Gemma AI</span></div><div class="body">Loading AI headline…</div></div>
+    <div class="chain-box" id="goChain">
+      <div class="chain-head"><span>◎ SOLANA · ON-CHAIN RUN RECEIPT</span><span class="net" id="goChainNet">devnet</span></div>
+      <div class="chain-status" id="goChainStatus">Connect a wallet to stamp this run (and Gemma's headline) on Solana.</div>
+      <div class="mode-row">
+        <button class="btn btn-sol btn-sm" id="goRecordBtn">⛓️ Stamp run on Solana</button>
+        <button class="btn btn-ghost btn-sm" id="goBoardBtn">🏆 Leaderboard</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="restartBtn">🔁 PLAY AGAIN</button>
+    <button class="btn btn-ghost" id="goGraphBtn">📊 View Graph</button>
+    <button class="btn btn-ghost hidden" id="goLobbyBtn">👥 Back to Room Lobby</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   আমার বাপের রাস্তা — AMAR BAPER RASTA  (AI Edition)
+   Single-file HTML5 bike arcade with Gemma LLM integration.
+   ============================================================ */
+
+/* ---------- i18n ---------- */
+const I18N = {
+  start_game:{en:"START GAME",bn:"খেলা শুরু"},
+  settings:{en:"AI Settings",bn:"AI সেটিংস"},
+  controls:{en:"CONTROLS",bn:"কন্ট্রোল"},
+  ai_features:{en:"AI FEATURES",bn:"AI ফিচার"},
+  game_over:{en:"GAME OVER",bn:"গেম ওভার"},
+  play_again:{en:"PLAY AGAIN",bn:"আবার খেলো"},
+  police_stop:{en:"POLICE STOP!",bn:"পুলিশ থামালো!"},
+  mob_stop:{en:"ANGRY MOB!",bn:"রাগী ভিড়!"},
+};
+function t(k,lang){lang=lang||STATE.uiLang;if(lang==='bn'&&I18N[k])return I18N[k].bn;return I18N[k]?I18N[k].en:k;}
+
+/* ---------- Global State ---------- */
+const STATE = {
+  uiLang:'both', // en | bn | both
+  voice:'en',
+  provider:'auto',
+  ollamaUrl:'http://localhost:11434',
+  ollamaModel:'gemma2:2b',
+  googleKey:'',
+  aiOk:false,
+  aiModel:'—',
+  aiLastErr:'',
+  speaking:false,
+  // game telemetry (for graph + AI prompts)
+  events:[],            // {t, type, data}
+  graphNodes:[],        // {id,label,type,x,y}
+  graphEdges:[],        // {from,to}
+  cards:[],              // AI card history
+};
+
+/* ---------- DOM refs ---------- */
+const $ = id=>document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+let W=0,H=0;
+function resize(){
+  const r = canvas.parentElement.getBoundingClientRect();
+  W = canvas.width = r.width;
+  H = canvas.height = r.height;
+}
+window.addEventListener('resize',resize);
+
+/* ============================================================
+   GAME ENGINE
+   ============================================================ */
+const GAME = {
+  running:false, paused:false, over:false,
+  time:0, dt:16, lastTs:0,
+  // world
+  scrollX:0, speed:6, baseSpeed:6,
+  roadY:0,
+  // player
+  bike:{x:120,y:0,vy:0,flying:false,fuel:100,angle:0,tilt:0,wheelSpin:0},
+  // entities
+  obstacles:[], traffic:[], fuelCans:[], particles:[], coins:[],
+  // stats
+  score:0, crashes:0, flyTime:0, distance:0,
+  // spawn timers
+  spawnT:0, fuelT:0, newsT:0, commentT:0,
+  // AI event triggers
+  lastSpeedTier:0, lastCrashTier:0,
+  // weather / day-night
+  dayPhase:0,
+  // negotiation lock
+  inNegotiation:false,
+};
+
+/* ---------- Road / Scenery ---------- */
+const SCENERY = ['🌴','🏠','🏢','🕌','🛕','⛽','🏪','🌳',' sign'];
+let sceneryObjs = [];
+
+function spawnScenery(){
+  sceneryObjs = [];
+  for(let i=0;i<12;i++){
+    sceneryObjs.push({x:i*180 + Math.random()*60, side:Math.random()<.5?-1:1, type:SCENERY[(Math.random()*SCENERY.length)|0], scale:.6+Math.random()*.5});
+  }
+}
+
+/* ---------- Obstacles ---------- */
+const OBSTACLES = [
+  {type:'cow',emoji:'🐄',w:70,h:55,dmg:30,score:0},
+  {type:'rickshaw',emoji:'🛺',w:80,h:60,dmg:25,score:0},
+  {type:'pothole',emoji:'🕳️',w:50,h:20,dmg:10,score:0},
+  {type:'dog',emoji:'🐕',w:50,h:40,dmg:15,score:0},
+  {type:'cart',emoji:'🛒',w:60,h:50,dmg:20,score:0},
+  {type:'barrier',emoji:'🚧',w:60,h:50,dmg:25,score:0},
+];
+const TRAFFIC = [
+  {emoji:'🚗',w:70,h:40,speed:2},
+  {emoji:'🚙',w:75,h:45,speed:3},
+  {emoji:'🚌',w:100,h:60,speed:1.5},
+  {emoji:'🛵',w:50,h:40,speed:4},
+];
+
+/* ---------- Audio (Web Audio API) ---------- */
+let AC=null;
+function audioInit(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } }
+function beep(freq=440,dur=.1,type='square',vol=.1){
+  if(!AC)return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.value=vol;
+  o.connect(g);g.connect(AC.destination);
+  o.start();o.stop(AC.currentTime+dur);
+  g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+dur);
+}
+function crashSound(){ beep(120,.3,'sawtooth',.18); setTimeout(()=>beep(80,.4,'square',.15),60); }
+function coinSound(){ beep(880,.08,'sine',.12); setTimeout(()=>beep(1320,.1,'sine',.12),50); }
+function flySound(){ beep(220,.2,'triangle',.08); }
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+/* ---------- Seeded RNG: same seed => same road on every device ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let RNG = {ob:Math.random, tr:Math.random, coin:Math.random, fuel:Math.random};
+function seedRoad(seed){
+  RNG = {ob:mulberry32(seed), tr:mulberry32(seed+101), coin:mulberry32(seed+202), fuel:mulberry32(seed+303)};
+  GAME.nextOb = 900; GAME.nextTr = 1400; GAME.nextCoin = 500; GAME.nextFuel = 1800;
+}
+// Spawn entities at fixed WORLD positions (independent of frame rate) so multiplayer roads match
+function spawnAhead(){
+  const horizon = GAME.scrollX + W + 150;
+  const tight = wx => Math.max(0.5, 1 - wx/60000); // road gets denser with distance
+  while(GAME.nextOb < horizon){
+    const r = RNG.ob; const ob = OBSTACLES[(r()*OBSTACLES.length)|0];
+    GAME.obstacles.push({...ob, wx:GAME.nextOb, y:0});
+    GAME.nextOb += (420 + r()*480) * tight(GAME.nextOb);
+  }
+  while(GAME.nextTr < horizon){
+    const r = RNG.tr; const tr = TRAFFIC[(r()*TRAFFIC.length)|0];
+    GAME.traffic.push({...tr, wx:GAME.nextTr, y:0, relSpeed:tr.speed});
+    GAME.nextTr += (900 + r()*900) * tight(GAME.nextTr);
+  }
+  while(GAME.nextCoin < horizon){
+    const r = RNG.coin;
+    GAME.coins.push({wx:GAME.nextCoin, y:-20-r()*100, emoji:'🪙', spin:0});
+    GAME.nextCoin += 110 + r()*220;
+  }
+  while(GAME.nextFuel < horizon){
+    const r = RNG.fuel;
+    GAME.fuelCans.push({wx:GAME.nextFuel, y:-30-r()*60, emoji:'⛽'});
+    GAME.nextFuel += 1500 + r()*1500;
+  }
+}
+
+function startGame(opts){
+  opts = (opts && opts.mode) ? opts : {mode:'solo'};
+  MODE.type = opts.mode;
+  audioInit();
+  Object.assign(GAME,{
+    running:true, paused:false, over:false,
+    time:0, scrollX:0, speed:6, baseSpeed:6,
+    bike:{x:140,y:0,vy:0,flying:false,fuel:100,angle:0,tilt:0,wheelSpin:0},
+    obstacles:[], traffic:[], fuelCans:[], particles:[], coins:[],
+    score:0, crashes:0, flyTime:0, distance:0,
+    spawnT:0, fuelT:0, newsT:0, commentT:0,
+    lastSpeedTier:0, lastCrashTier:0,
+    dayPhase:0, inNegotiation:false,
+  });
+  seedRoad(opts.seed || ((Math.random()*1e9)|0));
+  RIVAL.reset(MODE.type==='solo');
+  PEER.ghosts = {};
+  $('rivalChip').classList.toggle('hidden', MODE.type!=='solo');
+  $('mpChip').classList.toggle('hidden', MODE.type!=='mp');
+  $('goResult').textContent='';
+  spawnScenery();
+  STATE.events=[]; STATE.graphNodes=[]; STATE.graphEdges=[];
+  // seed initial graph nodes
+  addGraphNode('game','Game Engine','core');
+  addGraphNode('player','Player Actions','input');
+  addGraphNode('ai','Gemma AI','ai');
+  addGraphNode('world','Game World','state');
+  addGraphEdge('player','game'); addGraphEdge('game','world'); addGraphEdge('world','ai'); addGraphEdge('ai','game');
+  if(MODE.type==='solo'){ addGraphNode('rival','Gemma Rival','ai'); addGraphEdge('ai','rival'); addGraphEdge('rival','world'); }
+  if(MODE.type==='mp'){ addGraphNode('peer','Remote Player (WebRTC)','input'); addGraphEdge('peer','world'); addGraphEdge('game','peer'); }
+  $('startScreen').classList.add('hidden');
+  $('gameOverScreen').classList.add('hidden');
+  $('mpModal').classList.add('hidden');
+  pushEvent('game_start',{mode:MODE.type});
+  // initial AI greeting
+  aiGreeting();
+  if(MODE.type==='solo') setTimeout(()=>RIVAL.think(), 2500);
+  GAME.lastTs = performance.now();
+  if(!GAME._loopOn){ GAME._loopOn = true; requestAnimationFrame(loop); }
+}
+
+function loop(ts){
+  if(!GAME.running) return;
+  const dt = Math.min(40, ts - GAME.lastTs);
+  GAME.lastTs = ts; GAME.time += dt; GAME.dt = dt;
+  if(!GAME.paused && !GAME.inNegotiation && !GAME.over){
+    update(dt);
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update(dt){
+  const d = dt/16.67; // normalize to 60fps
+  // speed ramps with score
+  GAME.speed = GAME.baseSpeed + Math.min(8, GAME.score/300);
+  GAME.scrollX += GAME.speed * d;
+  GAME.distance += GAME.speed * d * 0.1;
+  GAME.dayPhase = (GAME.dayPhase + d*0.0015) % 1;
+
+  // ===== Player input =====
+  const b = GAME.bike;
+  if(KEYS.left) b.tilt = Math.max(-.4, b.tilt - .04*d);
+  else if(KEYS.right) b.tilt = Math.min(.4, b.tilt + .04*d);
+  else b.tilt *= .85;
+  b.x += b.tilt * 6 * d;
+  b.x = Math.max(40, Math.min(W*0.45, b.x));
+
+  if(KEYS.up || KEYS.fly){
+    if(b.fuel>0){ b.flying=true; b.vy -= 0.6*d; b.fuel -= 0.4*d; GAME.flyTime += d; if(GAME.time-(GAME._lastFly||0)>220){ GAME._lastFly=GAME.time; flySound(); } }
+    else b.flying=false;
+  } else { b.flying=false; }
+  if(KEYS.down){ b.vy += 1.2*d; }
+
+  // gravity
+  b.vy += 0.4*d;
+  b.y += b.vy * d;
+  if(b.y >= 0){ b.y=0; if(b.vy>4){ crashLand(); } b.vy=0; b.flying=false; }
+  if(b.y < -H*0.55){ b.y = -H*0.55; b.vy = 0; }
+  b.wheelSpin += GAME.speed * 0.05 * d;
+  b.angle = b.flying ? b.vy*0.02 : 0;
+
+  // fuel regen slowly when grounded
+  if(!b.flying && b.y>=-2 && b.fuel<100) b.fuel = Math.min(100, b.fuel+0.05*d);
+
+  // score: distance + flying bonus
+  GAME.score += d * (b.flying?2:1);
+
+  // ===== Spawn (seeded, world-positioned) =====
+  spawnAhead();
+
+  // ===== Move entities: screen x = world x - camera =====
+  for(const t of GAME.traffic){ t.wx += t.relSpeed * d; }
+  for(const c of GAME.coins){ c.spin += .1*d; }
+  const sx = GAME.scrollX;
+  for(const arr of [GAME.obstacles, GAME.traffic, GAME.fuelCans, GAME.coins]) for(const e of arr) e.x = e.dead ? -9999 : e.wx - sx;
+
+  // ===== Gemma rival / remote player =====
+  RIVAL.update(d);
+  PEER.tick(d);
+
+  // keep obstacles a bit longer (rival may still be behind the player)
+  GAME.obstacles = GAME.obstacles.filter(o=>!o.dead && o.x>-1200);
+  GAME.traffic = GAME.traffic.filter(t=>!t.dead && t.x>-1200);
+  GAME.fuelCans = GAME.fuelCans.filter(f=>!f.dead && f.x>-50);
+  GAME.coins = GAME.coins.filter(c=>!c.dead && c.x>-50);
+
+  // scenery parallax
+  for(const s of sceneryObjs){ s.x -= GAME.speed*0.3*d; if(s.x<-50){s.x=W+Math.random()*100;s.type=SCENERY[(Math.random()*SCENERY.length)|0];} }
+
+  // particles
+  for(const p of GAME.particles){ p.x += p.vx*d; p.y += p.vy*d; p.vy += 0.3*d; p.life -= d; }
+  GAME.particles = GAME.particles.filter(p=>p.life>0);
+
+  // ===== Collisions =====
+  const bikeScreenY = H*0.7 + b.y;
+  const bikeBox = {x:b.x-25, y:bikeScreenY-30, w:60, h:50};
+
+  // obstacles (only when low enough)
+  if(b.y > -40){
+    for(const o of GAME.obstacles){
+      const oy = H*0.78;
+      const obBox = {x:o.x-10, y:oy, w:o.w, h:o.h};
+      if(aabb(bikeBox, obBox)){
+        crash(o);
+        o.dead = true;
+      }
+    }
+  }
+  // traffic
+  if(b.y > -30){
+    for(const t of GAME.traffic){
+      const ty = H*0.72;
+      const tBox = {x:t.x-10, y:ty, w:t.w, h:t.h};
+      if(aabb(bikeBox, tBox)){
+        crash(t);
+        // chance to trigger mob event
+        if(Math.random()<0.35) triggerNegotiation('mob');
+        else if(Math.random()<0.5) triggerNegotiation('police');
+        t.dead = true;
+      }
+    }
+  }
+  // fuel pickups
+  for(const f of GAME.fuelCans){
+    const fy = H*0.7 + f.y;
+    if(Math.abs(b.x - f.x)<35 && Math.abs((H*0.7+b.y) - fy)<40){
+      b.fuel = Math.min(100, b.fuel+30);
+      coinSound();
+      spawnParticles(f.x, fy, '#08d9d6', 12);
+      f.dead = true; f.x = -9999;
+      pushEvent('fuel_pickup',{fuel:b.fuel});
+    }
+  }
+  // coins
+  for(const c of GAME.coins){
+    const cy = H*0.7 + c.y;
+    if(Math.abs(b.x - c.x)<30 && Math.abs((H*0.7+b.y) - cy)<35){
+      GAME.score += 25;
+      coinSound();
+      spawnParticles(c.x, cy, '#ffd369', 8);
+      c.dead = true; c.x = -9999;
+      pushEvent('coin',{score:GAME.score});
+    }
+  }
+
+  // ===== AI event triggers =====
+  // speed-based commentary
+  const speedTier = Math.floor(GAME.speed/3);
+  if(speedTier !== GAME.lastSpeedTier && speedTier>0){
+    GAME.lastSpeedTier = speedTier;
+    maybeAIComment('speed', {speed:Math.round(GAME.speed*10), tier:speedTier});
+  }
+  // periodic news
+  GAME.newsT -= d;
+  if(GAME.newsT<=0){
+    GAME.newsT = 600 + Math.random()*400; // ~10-16s
+    maybeAINews();
+  }
+  // periodic tactic
+  GAME.commentT -= d;
+  if(GAME.commentT<=0){
+    GAME.commentT = 450 + Math.random()*300;
+    maybeAIComment('tactic', {score:Math.round(GAME.score), crashes:GAME.crashes, fuel:Math.round(b.fuel)});
+  }
+
+  // ===== HUD update =====
+  $('scoreVal').textContent = Math.round(GAME.score);
+  $('speedVal').textContent = Math.round(GAME.speed*10);
+  $('fuelVal').textContent = Math.round(b.fuel);
+  $('flyVal').textContent = Math.round(GAME.flyTime/60);
+  $('crashVal').textContent = GAME.crashes;
+  $('fuelChip').classList.toggle('low', b.fuel<25);
+
+  // game over conditions
+  if(b.fuel<=0 && b.y>=0 && GAME.speed<2){ /* out of fuel & slow */ }
+}
+
+function aabb(a,b){return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;}
+
+function crash(ob){
+  GAME.crashes++;
+  GAME.score = Math.max(0, GAME.score-15);
+  crashSound();
+  spawnParticles(GAME.bike.x, H*0.7+GAME.bike.y, '#ff4757', 20);
+  $('flash').classList.add('show');
+  setTimeout(()=>$('flash').classList.remove('show'), 120);
+  // small speed penalty
+  GAME.speed = Math.max(3, GAME.speed*0.7);
+  GAME.bike.vy = -3; // small hop
+  pushEvent('crash',{type:ob.type, crashes:GAME.crashes});
+  // AI reaction
+  maybeAIComment('crash', {type:ob.type, crashes:GAME.crashes});
+  if(GAME.crashes>=8){ gameOver(); }
+}
+
+function crashLand(){
+  if(GAME.bike.vy>10){
+    crashSound();
+    spawnParticles(GAME.bike.x, H*0.72, '#ffa502', 15);
+    GAME.score = Math.max(0, GAME.score-5);
+  }
+}
+
+function spawnParticles(x,y,color,n){
+  for(let i=0;i<n;i++){
+    GAME.particles.push({x,y,vx:(Math.random()-.5)*6, vy:-Math.random()*5-1, life:30+Math.random()*20, color, size:2+Math.random()*3});
+  }
+}
+
+function gameOver(){
+  GAME.over = true;
+  pushEvent('game_over',{score:Math.round(GAME.score), crashes:GAME.crashes});
+  // AI writes final news
+  aiGameOverNews();
+  if(MODE.type==='mp') PEER.sendOver();
+  updateGoResult();
+  SOL.onRunOver();
+  // populate stats
+  $('goStats').innerHTML = `
+    <div class="stat"><div class="v">${Math.round(GAME.score)}</div><div class="l">Score</div></div>
+    <div class="stat"><div class="v">${Math.round(GAME.distance)}m</div><div class="l">Distance</div></div>
+    <div class="stat"><div class="v">${GAME.crashes}</div><div class="l">Crashes</div></div>
+    <div class="stat"><div class="v">${Math.round(GAME.flyTime/60)}s</div><div class="l">Air Time</div></div>`;
+  $('restartBtn').textContent = (MODE.type==='mp' && !PEER.isHost) ? '🔁 ASK HOST FOR REMATCH' : '🔁 PLAY AGAIN';
+  $('goLobbyBtn').classList.toggle('hidden', MODE.type!=='mp');
+  setTimeout(()=>$('gameOverScreen').classList.remove('hidden'), 800);
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  // sky gradient by dayPhase
+  const phase = GAME.dayPhase;
+  const skyTop = `hsl(${260 - phase*60}, 60%, ${15+phase*5}%)`;
+  const skyMid = `hsl(${300 - phase*80}, 50%, ${30+phase*10}%)`;
+  const skyBot = `hsl(${30 + phase*20}, 80%, ${55+phase*5}%)`;
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, skyTop); g.addColorStop(.5, skyMid); g.addColorStop(1, skyBot);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // sun/moon
+  const sunX = W*0.8, sunY = H*0.18 + Math.sin(phase*Math.PI*2)*30;
+  ctx.beginPath(); ctx.arc(sunX, sunY, 35, 0, Math.PI*2);
+  ctx.fillStyle = phase<.5? '#ffd369':'#e0e0ff';
+  ctx.shadowBlur=30; ctx.shadowColor=ctx.fillStyle; ctx.fill(); ctx.shadowBlur=0;
+
+  // distant mountains
+  ctx.fillStyle='#1a1040';
+  ctx.beginPath();
+  ctx.moveTo(0,H*0.6);
+  for(let x=0;x<=W;x+=60){
+    ctx.lineTo(x, H*0.55 + Math.sin((x+GAME.scrollX*0.1)*0.01)*30);
+  }
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+
+  // buildings silhouette
+  ctx.fillStyle='#0d0a25';
+  for(let i=0;i<20;i++){
+    const bx = ((i*90 - GAME.scrollX*0.3) % (W+100) + W+100) % (W+100) - 50;
+    const bh = 60+ (i%4)*30;
+    ctx.fillRect(bx, H*0.6-bh, 60, bh);
+    // windows
+    ctx.fillStyle='#ffd369';
+    for(let wy=0;wy<bh-10;wy+=15){ if(Math.random()<.6) ctx.fillRect(bx+8, H*0.6-bh+wy, 6, 8); ctx.fillRect(bx+30, H*0.6-bh+wy, 6, 8); }
+    ctx.fillStyle='#0d0a25';
+  }
+
+  // road
+  const roadTop = H*0.7;
+  ctx.fillStyle='#2a2438';
+  ctx.fillRect(0, roadTop, W, H-roadTop);
+  // road edge stripes
+  ctx.fillStyle='#ffd369';
+  ctx.fillRect(0, roadTop-4, W, 4);
+  ctx.fillStyle='#08d9d6';
+  ctx.fillRect(0, roadTop, W, 2);
+  // lane dashes
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.setLineDash([20,30]);
+  ctx.beginPath();
+  for(let lane=1;lane<4;lane++){
+    const ly = roadTop + (lane*(H-roadTop)/4);
+    ctx.moveTo(0, ly); ctx.lineTo(W, ly);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  // moving center line
+  ctx.strokeStyle='#fff'; ctx.lineWidth=4; ctx.setLineDash([40,30]);
+  ctx.lineDashOffset = -GAME.scrollX;
+  ctx.beginPath(); ctx.moveTo(0, roadTop+(H-roadTop)*0.5); ctx.lineTo(W, roadTop+(H-roadTop)*0.5); ctx.stroke();
+  ctx.setLineDash([]); ctx.lineDashOffset=0;
+
+  // scenery objects
+  for(const s of sceneryObjs){
+    const sy = roadTop - 10;
+    ctx.font = `${Math.round(40*s.scale)}px serif`;
+    ctx.textAlign='center';
+    ctx.fillText(s.type, s.x, sy);
+  }
+
+  // obstacles
+  ctx.textAlign='center';
+  for(const o of GAME.obstacles){
+    ctx.font = '40px serif';
+    ctx.fillText(o.emoji, o.x, H*0.78);
+    // shadow
+    ctx.fillStyle='rgba(0,0,0,.3)';
+    ctx.beginPath(); ctx.ellipse(o.x, H*0.78+5, o.w*0.4, 5, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  // traffic
+  for(const tr of GAME.traffic){
+    ctx.font = '40px serif';
+    ctx.fillText(tr.emoji, tr.x, H*0.72);
+    ctx.fillStyle='rgba(0,0,0,.3)';
+    ctx.beginPath(); ctx.ellipse(tr.x, H*0.72+5, tr.w*0.4, 5, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  // fuel cans
+  for(const f of GAME.fuelCans){
+    ctx.font='30px serif';
+    const fy = H*0.7 + f.y;
+    ctx.fillText(f.emoji, f.x, fy);
+  }
+  // coins
+  for(const c of GAME.coins){
+    ctx.font='24px serif';
+    const cy = H*0.7 + c.y;
+    ctx.save();
+    ctx.translate(c.x, cy);
+    ctx.scale(Math.cos(c.spin), 1);
+    ctx.fillText(c.emoji, 0, 0);
+    ctx.restore();
+  }
+
+  // particles
+  for(const p of GAME.particles){
+    ctx.globalAlpha = Math.min(1, p.life/30);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.size, p.size);
+  }
+  ctx.globalAlpha=1;
+
+  // ===== Rival + friend ghost, then player =====
+  RIVAL.draw();
+  PEER.draw();
+  drawBike();
+
+  // flying trail
+  if(GAME.bike.flying){
+    ctx.strokeStyle='rgba(8,217,214,.5)'; ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(GAME.bike.x-30, H*0.7+GAME.bike.y+10);
+    ctx.lineTo(GAME.bike.x-60-GAME.speed*2, H*0.7+GAME.bike.y+10+Math.random()*4);
+    ctx.stroke();
+  }
+
+  // vignette
+  const vg = ctx.createRadialGradient(W/2,H/2,H*0.3, W/2,H/2,H*0.8);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.5)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+}
+
+function drawBike(){
+  const b = GAME.bike;
+  const bx = b.x, by = H*0.7 + b.y - 10;
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(b.angle);
+
+  // shadow on ground
+  if(b.y<0){
+    ctx.fillStyle='rgba(0,0,0,.3)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10-b.y, 30, 6, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  // bike body
+  ctx.fillStyle='#ff2e63';
+  ctx.beginPath();
+  ctx.moveTo(-25, 0); ctx.lineTo(-15, -10); ctx.lineTo(15, -10); ctx.lineTo(25, 0); ctx.lineTo(20, 8); ctx.lineTo(-20, 8); ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+
+  // rider
+  ctx.fillStyle='#08d9d6';
+  ctx.beginPath(); ctx.arc(0, -22, 9, 0, Math.PI*2); ctx.fill(); // head
+  ctx.fillStyle='#ffd369';
+  ctx.fillRect(-5, -18, 10, 12); // body
+  // helmet visor
+  ctx.fillStyle='#1d2647'; ctx.fillRect(-3, -24, 6, 3);
+
+  // wheels
+  ctx.fillStyle='#1a1040';
+  ctx.beginPath(); ctx.arc(-20, 8, 9, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(20, 8, 9, 0, Math.PI*2); ctx.fill();
+  // wheel spokes (spin)
+  ctx.strokeStyle='#08d9d6'; ctx.lineWidth=2;
+  ctx.save(); ctx.translate(-20,8); ctx.rotate(b.wheelSpin);
+  ctx.beginPath(); ctx.moveTo(-7,0); ctx.lineTo(7,0); ctx.moveTo(0,-7); ctx.lineTo(0,7); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.translate(20,8); ctx.rotate(b.wheelSpin);
+  ctx.beginPath(); ctx.moveTo(-7,0); ctx.lineTo(7,0); ctx.moveTo(0,-7); ctx.lineTo(0,7); ctx.stroke(); ctx.restore();
+
+  // exhaust when speeding
+  if(GAME.speed>8){
+    ctx.fillStyle='rgba(255,211,105,.4)';
+    ctx.beginPath(); ctx.arc(-30+Math.random()*4, 4+Math.random()*4, 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+const KEYS = {left:false,right:false,up:false,down:false,fly:false};
+window.addEventListener('keydown', e=>{
+  if(/^(input|textarea|select)$/i.test((e.target&&e.target.tagName)||'')) return;
+  audioInit();
+  if(['ArrowLeft','a','A'].includes(e.key)) KEYS.left=true;
+  if(['ArrowRight','d','D'].includes(e.key)) KEYS.right=true;
+  if(['ArrowUp','w','W',' '].includes(e.key)){ KEYS.up=true; KEYS.fly=true; e.preventDefault(); }
+  if(['ArrowDown','s','S'].includes(e.key)) KEYS.down=true;
+  if(e.key==='Escape' && GAME.running && !GAME.over){ GAME.paused=!GAME.paused; toast(GAME.paused?'⏸ Paused':'▶ Resumed'); }
+});
+window.addEventListener('keyup', e=>{
+  if(/^(input|textarea|select)$/i.test((e.target&&e.target.tagName)||'')) return;
+  if(['ArrowLeft','a','A'].includes(e.key)) KEYS.left=false;
+  if(['ArrowRight','d','D'].includes(e.key)) KEYS.right=false;
+  if(['ArrowUp','w','W',' '].includes(e.key)){ KEYS.up=false; KEYS.fly=false; }
+  if(['ArrowDown','s','S'].includes(e.key)) KEYS.down=false;
+});
+
+// touch buttons
+function bindTouch(btnId, key){
+  const el = $(btnId);
+  const on = e=>{e.preventDefault(); KEYS[key]=true; audioInit();};
+  const off = e=>{e.preventDefault(); KEYS[key]=false;};
+  el.addEventListener('touchstart',on); el.addEventListener('touchend',off);
+  el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',off);
+}
+bindTouch('btnLeft','left');
+bindTouch('btnRight','right');
+bindTouch('btnFly','fly');
+bindTouch('btnFly','up');
+bindTouch('btnDown','down');
+
+/* ============================================================
+   AI INTEGRATION (Gemma via Ollama / Google AI Studio)
+   ============================================================ */
+
+async function aiGenerate(prompt, opts={}){
+  STATE.inflight = (STATE.inflight||0) + 1;
+  try{ return await aiGenerateRaw(prompt, opts); } finally { STATE.inflight--; }
+}
+async function aiGenerateRaw(prompt, opts={}){
+  opts.max = opts.max || 120;
+  opts.temp = opts.temp || 0.85;
+  const prov = STATE.provider==='auto' ? (STATE.aiOk ? (STATE._lastProvider||'ollama') : 'ollama') : STATE.provider;
+
+  // try Ollama
+  if(prov==='ollama' || prov==='auto'){
+    try{
+      const r = await fetch(`${STATE.ollamaUrl}/api/generate`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({model:STATE.ollamaModel, prompt, stream:false, options:{temperature:opts.temp, num_predict:opts.max}})
+      });
+      if(r.ok){
+        const j = await r.json();
+        STATE.aiOk = true; STATE._lastProvider='ollama';
+        STATE.aiModel = STATE.ollamaModel + ' (Ollama)';
+        updateAiPill();
+        return (j.response||'').trim();
+      }
+      throw new Error('Ollama HTTP '+r.status);
+    }catch(e){
+      STATE.aiLastErr = e.message;
+      if(prov==='ollama'){ STATE.aiOk=false; STATE.aiModel='Ollama offline'; updateAiPill(); }
+    }
+  }
+  // fallback Google AI Studio (gemma-2b via Gemini API)
+  if(prov==='google' || prov==='auto'){
+    if(!STATE.googleKey){ STATE.aiOk=false; STATE.aiModel='No API key'; updateAiPill(); return null; }
+    try{
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${STATE.googleModel||'gemma-3-4b-it'}:generateContent?key=${STATE.googleKey}`;
+      const r = await fetch(url,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:opts.temp, maxOutputTokens:opts.max}})
+      });
+      if(r.ok){
+        const j = await r.json();
+        const txt = j?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        STATE.aiOk=true; STATE._lastProvider='google';
+        STATE.aiModel=(STATE.googleModel||'gemma-3-4b-it')+' (Gemini API)';
+        updateAiPill();
+        return txt.trim();
+      }
+      throw new Error('Google HTTP '+r.status);
+    }catch(e){
+      STATE.aiLastErr = e.message; STATE.aiOk=false; STATE.aiModel='Google err'; updateAiPill();
+    }
+  }
+  return null;
+}
+
+function updateAiPill(){
+  const p = $('aiPill'), m=$('aiModel');
+  if(STATE.aiOk){ p.textContent='ONLINE'; p.className='pill ok'; }
+  else { p.textContent='OFFLINE'; p.className='pill err'; }
+  m.textContent = STATE.aiModel;
+}
+
+// Fallback content if AI is offline (so judges still see content flowing)
+const FALLBACK = {
+  news:[
+    "Breaking: Mystery biker defies physics on Flyover Road, witnesses stunned",
+    "Local hero or local menace? The bike rider everyone's talking about",
+    "Traffic police baffled as speeding bike outruns patrol cars",
+    "Streets chaos: Cow sues biker for emotional distress, demands apology",
+    "Citizens report flying motorcycle over Mirpur, photo evidence pending",
+  ],
+  police:[
+    "Stop right there! License, registration, and... is that a jet engine?",
+    "You think you can fly past MY checkpoint? Bribe or bribe harder.",
+    "Sir, your bike has wings. That's not street-legal.",
+  ],
+  crowd:[
+    "Hey! You scratched my rickshaw! Pay up NOW!",
+    "Everyone look! The flying biker! Quick, video!",
+    "Why you ride like that? My grandmother slower than you and she dead!",
+  ],
+  tactic:[
+    "Tip: Save fuel for the long straights. Tap fly in short bursts.",
+    "Watch the cow — it does NOT move. Steer early.",
+    "Score multiplies when airborne. Chain jumps for combos.",
+    "Low fuel? Land near a fuel can, don't risk the fly.",
+  ],
+  crash:[
+    "Oof, that's gonna leave a mark. And a repair bill.",
+    "The cow wins again. Cows always win.",
+    "Try steering BEFORE you hit it, not after.",
+  ],
+};
+function pick(arr){ return arr[(Math.random()*arr.length)|0]; }
+
+/* ---------- AI Cards UI ---------- */
+function addCard(type, body, isBn=false, speak=true, fromAI=null){
+  if(fromAI===null) fromAI = STATE.aiOk;
+  const card = document.createElement('div');
+  card.className = 'ai-card '+type;
+  const tagText = {news:'📰 BREAKING NEWS', police:'🚔 POLICE', crowd:'😠 CROWD', tactic:'🎯 AI TACTIC', crash:'💥 CRASH', ai:'🤖 AI', greet:'👋 AI', rival:'🤖 GEMMA RIVAL'}[type]||'🤖 AI';
+  card.innerHTML = `
+    <div class="tag"><span>${tagText}</span><span class="ai-badge ${fromAI?'':'off'}">${fromAI?'Gemma':'preset'}</span></div>
+    <div class="body ${isBn?'bn':''}">${body}</div>
+    <div class="meta"><span>${new Date().toLocaleTimeString()}</span><button class="speak-btn" title="Speak">🔊</button></div>`;
+  const plain = body.replace(/<[^>]+>/g,'');
+  card.querySelector('.speak-btn').onclick = ()=> speakText(plain, isBn?'bn':'en');
+  $('sbBody').prepend(card);
+  // keep last 40
+  while($('sbBody').children.length>40) $('sbBody').lastChild.remove();
+  STATE.cards.push({type, body, t:Date.now()});
+  // auto-speak newest
+  if(speak && STATE.voice!=='off' && !STATE.speaking){
+    speakText(plain, isBn?'bn':STATE.voice);
+  }
+}
+
+function setTab(tab){
+  document.querySelectorAll('.sb-tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  // we just show all cards always; tabs are filters
+  if(tab==='graph'){ openGraphModal(); return; }
+  // for other tabs, simple filter
+  document.querySelectorAll('.sb-body .ai-card').forEach(c=>{
+    if(tab==='feed') c.classList.remove('hidden');
+    else if(tab==='news') c.classList.toggle('hidden', !c.classList.contains('news'));
+    else if(tab==='tactic') c.classList.toggle('hidden', !(c.classList.contains('tactic')||c.classList.contains('crash')));
+  });
+}
+
+/* ---------- AI Prompt Templates ---------- */
+async function maybeAINews(){
+  if(STATE.inflight>0) return;
+  const ctx = `Game state: score ${Math.round(GAME.score)}, speed ${Math.round(GAME.speed*10)}km/h, crashes ${GAME.crashes}, flying ${Math.round(GAME.flyTime/60)}s, distance ${Math.round(GAME.distance)}m. Player bike: red sports bike on a chaotic Bangladeshi street.`;
+  const lang = STATE.uiLang==='bn' ? 'Bangla' : (STATE.uiLang==='both' ? 'English (1 short line)' : 'English');
+  const prompt = `You are a witty news anchor for a comedy street-racing channel. Generate ONE short funny breaking news headline (max 14 words) about a player riding a bike named "Amar Baper Rasta" through chaotic traffic. ${ctx}. Reply in ${lang}. Just the headline, no quotes, no preamble.`;
+  let out = await aiGenerate(prompt, {max:40, temp:0.95});
+  if(!out){ out = pick(FALLBACK.news); addCard('news', out, false, true, false); }
+  else addCard('news', out, STATE.uiLang==='bn', true);
+  pushEvent('ai_news',{text:out});
+  addGraphNode('news_'+STATE.events.length, 'News gen', 'ai');
+  addGraphEdge('ai','news_'+STATE.events.length);
+}
+
+async function maybeAIComment(kind, data){
+  if(STATE.inflight>0 && kind!=='crash') return;
+  let prompt='', type='tactic';
+  if(kind==='speed'){
+    prompt = `You are a hyper-energetic sports commentator watching a bike arcade game. The player just hit speed tier ${data.tier} (${data.speed} km/h). Give ONE punchy tactical or hype comment (max 18 words). Be funny. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}. Just the line.`;
+    type='tactic';
+  } else if(kind==='crash'){
+    prompt = `In an arcade bike game, the player just crashed into a ${data.type} (crash #${data.crashes}). Roast them with ONE funny line (max 18 words). Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}. Just the roast.`;
+    type='crash';
+  } else {
+    prompt = `You are an AI co-driver in a chaotic bike arcade game. Current state: score ${data.score}, crashes ${data.crashes}, fuel ${data.fuel}%. Give ONE short tactical tip OR motivational line (max 20 words). Be witty. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}. Just the line.`;
+    type='tactic';
+  }
+  let out = STATE.inflight>0 ? null : await aiGenerate(prompt, {max:50, temp:0.9});
+  const fromAI = !!out;
+  if(!out){ out = pick(FALLBACK[type]); }
+  addCard(type, out, STATE.uiLang==='bn' && fromAI, true, fromAI);
+  pushEvent('ai_comment',{kind, text:out});
+}
+
+async function aiGreeting(){
+  const prompt = `You are Gemma, an AI co-pilot in a chaotic Bangladeshi street bike arcade game called "Amar Baper Rasta". Greet the player in ONE short punchy line (max 16 words). Be playful. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}.`;
+  let out = await aiGenerate(prompt, {max:40, temp:0.9});
+  const fromAI = !!out;
+  if(!out) out = "Saddle up, speed demon. The streets won't know what hit them!";
+  addCard('greet', out, STATE.uiLang==='bn' && fromAI, true, fromAI);
+}
+
+async function aiGameOverNews(){
+  const ctx = `Final stats: score ${Math.round(GAME.score)}, distance ${Math.round(GAME.distance)}m, crashes ${GAME.crashes}, air time ${Math.round(GAME.flyTime/60)}s.`;
+  const prompt = `You are a comedy news anchor. The player's run on "Amar Baper Rasta" just ended. Write a witty breaking news headline + 1-line obituary-style summary about their ride. Max 35 words total. ${ctx}. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}.`;
+  let out = await aiGenerate(prompt, {max:80, temp:0.95});
+  if(!out) out = `Breaking: Local biker's run ends in glory and dents. Score ${Math.round(GAME.score)}, crashes ${GAME.crashes}. Streets breathe sigh of relief.`;
+  $('goNews').querySelector('.body').textContent = out;
+}
+
+/* ============================================================
+   GEMMA RIVAL — AI competitor
+   A fast rule-based "driver" handles reflexes every frame;
+   Gemma is the "brain": every ~8s it reads the race state,
+   picks the rival's strategy (which changes speed, risk and
+   fuel use) and trash-talks the player.
+   ============================================================ */
+const MODE = {type:'solo'};
+const RIVAL = {
+  on:false, wx:0, y:0, vy:0, speed:6, fuel:100, crashes:0, score:0, spin:0,
+  strategy:'BALANCED', thinkT:480, thinking:false, stunned:0, lastSrc:'—',
+  STRATS:{
+    AGGRESSIVE:{boost:1.6, skill:.74, fuelUse:8,  label:'🔥 Aggressive'},
+    BALANCED:  {boost:.7,  skill:.86, fuelUse:10, label:'⚖️ Balanced'},
+    CAUTIOUS:  {boost:-.3, skill:.97, fuelUse:12, label:'🛡️ Cautious'},
+    FUEL_SAVER:{boost:.2,  skill:.80, fuelUse:5,  label:'⛽ Fuel saver'},
+  },
+  reset(on){
+    Object.assign(this,{on, wx:GAME.bike.x+40, y:0, vy:0, speed:6, fuel:100, crashes:0, score:0, spin:0,
+      strategy:'BALANCED', thinkT:480, thinking:false, stunned:0});
+  },
+  gapM(){ return Math.round((this.wx - (GAME.scrollX + GAME.bike.x))/10); },
+  update(d){
+    if(!this.on) return;
+    const st = this.STRATS[this.strategy] || this.STRATS.BALANCED;
+    const gap = this.wx - (GAME.scrollX + GAME.bike.x);
+    let target = GAME.baseSpeed + Math.min(8, this.score/300) + st.boost;
+    if(gap > 900) target -= 1.5;          // rubber-band so the race stays close & visible
+    if(gap < -900) target += 1.5;
+    if(this.stunned>0){ this.stunned -= d; target = 2.5; }
+    this.speed += (target - this.speed) * 0.04 * d;
+    this.wx += this.speed * d;
+    this.score += d * (this.y<0 ? 2 : 1);
+    this.spin += this.speed*0.05*d;
+    // reflexes: look ahead for obstacles
+    const look = 60 + this.speed*7;
+    for(const o of GAME.obstacles){
+      if(o.dead) continue;
+      const dist = o.wx - this.wx;
+      if(dist>0 && dist<look && !o._rv){
+        o._rv = true;
+        const hasFuel = this.fuel > st.fuelUse;
+        if(Math.random() < st.skill * (hasFuel?1:0.55)){
+          this.vy = -7.5 - this.speed*0.15; if(hasFuel) this.fuel -= st.fuelUse;
+        } else o._rvCrash = true;
+      }
+      if(o._rvCrash && !o._rvHit && dist < 15 && this.y > -30){ o._rvHit = true; this.crash(o); }
+    }
+    this.vy += 0.4*d; this.y += this.vy*d;
+    if(this.y>=0){ this.y=0; this.vy=0; this.fuel = Math.min(100, this.fuel + 0.07*d); }
+    // brain: ask Gemma for a new strategy every ~8s
+    this.thinkT -= d;
+    if(this.thinkT<=0 && !this.thinking){ this.thinkT = 480; this.think(); }
+    const g = this.gapM();
+    $('rivalVal').textContent = `Gemma ${g>=0? g+'m ahead':(-g)+'m behind'} · ${st.label}`;
+  },
+  crash(o){
+    this.crashes++; this.stunned = 45; this.speed *= 0.5;
+    const x = this.wx - GAME.scrollX;
+    if(x>-50 && x<W+50) spawnParticles(x, H*0.7, '#b388ff', 16);
+    pushEvent('rival_crash',{type:o.type});
+    if(Math.random()<0.5) addCard('rival', `🤖 Gemma Rival just hit a ${o.type}! Your chance — overtake now!`, false, false, false);
+  },
+  async think(){
+    if(!this.on || GAME.over) return;
+    this.thinking = true;
+    const g = this.gapM();
+    const prompt = `You are "Gemma Rival", an AI motorbike racer in the chaotic street-racing game "Amar Baper Rasta". Race state: you are ${Math.abs(g)}m ${g>=0?'AHEAD of':'BEHIND'} the human player. Your fuel: ${Math.round(this.fuel)}%. Your crashes: ${this.crashes}. Human crashes: ${GAME.crashes}/8. Human score: ${Math.round(GAME.score)}.
+Pick your racing strategy for the next 8 seconds:
+AGGRESSIVE = fastest but risky jumps; BALANCED = normal; CAUTIOUS = slower, almost never crash; FUEL_SAVER = use little fuel.
+Then write ONE short funny trash-talk line to the human (max 15 words)${STATE.uiLang==='bn'?' in Bangla':''}.
+Reply EXACTLY in this format:
+STRATEGY: <AGGRESSIVE|BALANCED|CAUTIOUS|FUEL_SAVER>
+TAUNT: <line>`;
+    const out = await aiGenerate(prompt, {max:60, temp:0.8, priority:true});
+    let strat=null, taunt=null, fromAI=false;
+    if(out){
+      const m = out.match(/STRATEGY\W*([A-Z_ ]+)/i);
+      if(m){ const k = m[1].trim().toUpperCase().replace(/\s+/g,'_'); strat = Object.keys(this.STRATS).find(s=>k.startsWith(s)) || null; }
+      const tm = out.match(/TAUNT\W*(.+)/i);
+      taunt = tm ? tm[1].replace(/^["*\s]+|["*\s]+$/g,'') : null;
+      fromAI = !!(strat || taunt);
+    }
+    if(!strat){ // rule-based brain when Gemma is unavailable
+      strat = this.fuel<25 ? 'FUEL_SAVER' : (g < -20 ? 'AGGRESSIVE' : (g > 40 ? 'CAUTIOUS' : 'BALANCED'));
+    }
+    if(!taunt) taunt = pick(FALLBACK.rival);
+    this.strategy = strat; this.thinking = false;
+    addCard('rival', `<b>${this.STRATS[strat].label}</b> — ${taunt}`, STATE.uiLang==='bn', true, fromAI);
+    addGraphNode('strat_'+strat, 'Strategy: '+strat, 'ai'); addGraphEdge('rival','strat_'+strat);
+    pushEvent('rival_strategy',{strat, fromAI});
+  },
+  draw(){
+    if(!this.on) return;
+    const x = this.wx - GAME.scrollX;
+    if(x < -30 || x > W+30){ edgeMarker(x<0?'left':'right', `🤖 Gemma ${Math.abs(this.gapM())}m`, '#b388ff', 0); return; }
+    drawOtherBike(x, H*0.7 + this.y - 10, '#7c4dff', '#b388ff', this.spin, 1, '🤖 GEMMA');
+  },
+};
+FALLBACK.rival = [
+  "Is that your top speed? My grandmother's rickshaw is faster.",
+  "I computed 4,096 routes. All of them end with you behind me.",
+  "Nice cow collision. Very… organic.",
+  "Catch me if you can, carbon-based rider!",
+  "My fuel is fine. Your ego, not so much.",
+];
+
+/* ---------- shared drawing helpers ---------- */
+function drawOtherBike(x, by, body, rider, spin, alpha, label){
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, by);
+  ctx.fillStyle=body; ctx.beginPath();
+  ctx.moveTo(-25,0); ctx.lineTo(-15,-10); ctx.lineTo(15,-10); ctx.lineTo(25,0); ctx.lineTo(20,8); ctx.lineTo(-20,8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=rider; ctx.beginPath(); ctx.arc(0,-22,9,0,Math.PI*2); ctx.fill(); ctx.fillRect(-5,-18,10,12);
+  ctx.fillStyle='#1a1040'; ctx.beginPath(); ctx.arc(-20,8,9,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(20,8,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=rider; ctx.lineWidth=2;
+  for(const wx of [-20,20]){ ctx.save(); ctx.translate(wx,8); ctx.rotate(spin); ctx.beginPath(); ctx.moveTo(-7,0); ctx.lineTo(7,0); ctx.moveTo(0,-7); ctx.lineTo(0,7); ctx.stroke(); ctx.restore(); }
+  ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillStyle=rider; ctx.fillText(label, 0, -38);
+  ctx.restore();
+}
+function edgeMarker(side, text, color, row){
+  ctx.save(); ctx.font='bold 13px sans-serif';
+  const w = ctx.measureText(text).width + 30, y = H*0.62 - row*30;
+  const x = side==='left' ? 8 : W - w - 8;
+  ctx.fillStyle='rgba(10,14,26,.8)'; ctx.fillRect(x, y-16, w, 24);
+  ctx.strokeStyle=color; ctx.strokeRect(x, y-16, w, 24);
+  ctx.fillStyle=color; ctx.textAlign='left';
+  ctx.fillText(side==='left' ? '◀ '+text : text+' ▶', x+8, y);
+  ctx.restore();
+}
+
+/* ============================================================
+   MULTIPLAYER — QR link-up over WebRTC (PeerJS)
+   Host creates a room → QR encodes  <game URL>?join=CODE
+   Phone scans → connects peer-to-peer → both race the same
+   seeded road and see each other as ghost bikes.
+   ============================================================ */
+const PEER = {
+  MAX:6,
+  COLORS:['#ffd369','#ff6b9d','#4ecca3','#7c8cff','#ffa502','#e056fd'],
+  peer:null, conn:null, conns:{}, isHost:false, code:'', myId:'', players:[], ghosts:{}, results:{},
+  sendT:0, joinTimer:null, hostTimer:null, inRace:false, left:false,
+  ICE:{config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},
+    {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'}]}},
+  idFor(code){ return 'abr-rasta-'+code.toLowerCase(); },
+  makeCode(){ const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<6;i++) s+=A[(Math.random()*A.length)|0]; return s; },
+  myName(){ let n=($('playerName').value||'').trim().slice(0,14); return n||'Rider'; },
+  status(m){ $('mpStatus').textContent = m; },
+  colorOf(id){ const i=this.players.findIndex(p=>p.id===id); return this.COLORS[(i<0?0:i)%this.COLORS.length]; },
+  nameOf(id){ const p=this.players.find(p=>p.id===id); return p?p.name:'Rider'; },
+  cleanup(){
+    clearTimeout(this.joinTimer); clearTimeout(this.hostTimer);
+    try{ Object.values(this.conns).forEach(c=>c.close()); }catch(e){}
+    try{ this.conn && this.conn.close(); }catch(e){} try{ this.peer && this.peer.destroy(); }catch(e){}
+    this.peer=null; this.conn=null; this.conns={}; this.players=[]; this.ghosts={}; this.results={}; this.inRace=false; this.code=''; this.myId='';
+  },
+  openModal(host){
+    $('startScreen').classList.add('hidden'); $('gameOverScreen').classList.add('hidden'); $('mpModal').classList.remove('hidden');
+    $('mpJoinView').classList.toggle('hidden', host!=='join'); $('mpRoomView').classList.toggle('hidden', host==='join');
+    $('hostShare').classList.toggle('hidden', host!==true); $('qrDetails').classList.toggle('hidden', host!==true);
+    $('mpStartBtn').classList.add('hidden');
+    $('mpTitle').textContent = host===true ? '👥 Team Lobby — You are HOST' : (host==='join' ? '🔗 Join a Room' : '👥 Team Lobby');
+  },
+  renderPlayers(){
+    const L=$('playerList'); L.innerHTML='';
+    this.players.forEach((p,i)=>{
+      const d=document.createElement('div'); d.className='prow';
+      const dot=document.createElement('span'); dot.className='dot'; dot.style.background=dot.style.color=this.COLORS[i%this.COLORS.length];
+      const n=document.createElement('span'); n.className='pn'; n.textContent=p.name; d.append(dot,n);
+      if(p.host){ const t=document.createElement('span'); t.className='tag host'; t.textContent='HOST'; d.append(t); }
+      if(p.id===this.myId){ const t=document.createElement('span'); t.className='tag you'; t.textContent='YOU'; d.append(t); }
+      L.append(d);
+    });
+    for(let i=this.players.length;i<Math.min(this.MAX,Math.max(this.players.length+1,3));i++){
+      const d=document.createElement('div'); d.className='prow empty'; d.textContent='⏳ waiting for a teammate…'; L.append(d);
+    }
+    $('pCount').textContent=this.players.length+'/'+this.MAX;
+    if(this.isHost){
+      const ok=this.players.length>=2; $('mpStartBtn').classList.toggle('hidden',!ok);
+      this.status(ok ? `✅ ${this.players.length} players ready — press START RACE` : 'Waiting for teammates — share the room code above');
+    }
+  },
+  broadcastLobby(){ this.renderPlayers(); this.broadcast({t:'lobby', players:this.players}); },
+  broadcast(m, exceptId){ for(const id in this.conns){ if(id===exceptId) continue; try{ if(this.conns[id].open) this.conns[id].send(m); }catch(e){} } },
+  fail(msg){ this.status('⚠️ '+msg); },
+  loadCheck(){ if(typeof Peer==='undefined'){ this.fail('Multiplayer library load hoyni. Internet check koro, ba lib/peerjs.min.js file ta index.html er pashe rakho.'); return false; } return true; },
+
+  /* ---------- HOST: create room ---------- */
+  host(){
+    this.cleanup(); this.isHost=true; this.left=false; this.openModal(true);
+    $('roomCode').textContent='······'; $('qrBox').textContent='Creating room…';
+    $('roomHint').textContent='Share this code with your team members.';
+    this.status('⏳ Creating room…');
+    if(!this.loadCheck()) return;
+    this.code=this.makeCode(); this.myId='host';
+    this.players=[{id:'host', name:this.myName(), host:true}];
+    this.renderPlayers();
+    this.peer=new Peer(this.idFor(this.code), Object.assign({debug:1}, this.ICE));
+    this.hostTimer=setTimeout(()=>{ if(!this.peer||!this.peer.open) this.fail('Multiplayer server er sathe connect hocche na. Internet check koro, tarpor Leave diye abar Create Room chapo.'); }, 12000);
+    this.peer.on('open', ()=>{
+      clearTimeout(this.hostTimer);
+      $('roomCode').textContent=this.code; renderQR(); this.renderPlayers();
+      toast('✅ Room created: '+this.code);
+    });
+    this.peer.on('connection', c=>this.hostAccept(c));
+    this.peer.on('disconnected', ()=>{ try{ this.peer && !this.peer.destroyed && this.peer.reconnect(); }catch(e){} });
+    this.peer.on('error', e=>{
+      if(e.type==='unavailable-id') return this.host();
+      this.fail(e.type==='network'||e.type==='server-error'||e.type==='socket-error' ? 'Multiplayer server e connect kora jacche na — internet check koro' : e.type);
+    });
+  },
+  hostAccept(c){
+    let pid=c.peer, joined=false;
+    c.on('open', ()=>{ this.conns[pid]=c; });
+    c.on('data', m=>{
+      if(!m||!m.t) return;
+      if(m.t==='hello'){
+        if(joined) return;
+        if(this.players.length>=this.MAX){ try{ c.send({t:'full'}); }catch(e){} setTimeout(()=>c.close(),300); delete this.conns[pid]; return; }
+        joined=true; this.conns[pid]=c;
+        const name=(String(m.name||'Rider').slice(0,14))||'Rider';
+        this.players.push({id:pid, name});
+        try{ c.send({t:'welcome', id:pid, players:this.players, inRace:this.inRace}); }catch(e){}
+        this.broadcastLobby(); toast('👥 '+name+' joined!'); beep(660,.12,'square',.08);
+      }
+      else if(m.t==='s'){ this.applyState(pid,m); this.broadcast(Object.assign({},m,{id:pid}), pid); }
+      else if(m.t==='over'){ this.applyOver(pid,m); this.broadcast(Object.assign({},m,{id:pid}), pid); }
+      else if(m.t==='again'){ toast('🔁 '+this.nameOf(pid)+' wants a rematch! Press PLAY AGAIN'); }
+    });
+    c.on('close', ()=>{
+      delete this.conns[pid]; delete this.ghosts[pid]; delete this.results[pid];
+      const i=this.players.findIndex(p=>p.id===pid);
+      if(i>=0){ const n=this.players[i].name; this.players.splice(i,1); this.broadcastLobby(); toast('👋 '+n+' left the room'); updateGoResult(); }
+    });
+  },
+
+  /* ---------- CLIENT: join room ---------- */
+  join(code){
+    code=(code||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length<4) { this.status('⚠️ Valid room code likho (6 letters)'); return; }
+    this.cleanup(); this.isHost=false; this.left=false; this.openModal('join');
+    $('joinCode').value=code; this.code=code;
+    this.status('⏳ Connecting to room '+code+'…');
+    if(!this.loadCheck()) return;
+    this.peer=new Peer(undefined, Object.assign({debug:1}, this.ICE));
+    this.peer.on('open', id=>{
+      this.myId=id;
+      const c=this.peer.connect(this.idFor(code), {reliable:true, metadata:{name:this.myName()}});
+      this.conn=c;
+      c.on('open', ()=>{ clearTimeout(this.joinTimer); c.send({t:'hello', name:this.myName()}); });
+      c.on('data', m=>this.onMsg(m));
+      c.on('close', ()=>{ if(this.left) return; this.ghosts={}; toast('⚠️ Host left the room'); this.fail('Host room theke ber hoye geche.');
+        $('mpStartBtn').classList.add('hidden'); if($('mpModal').classList.contains('hidden') && !GAME.running){ $('mpModal').classList.remove('hidden'); } });
+    });
+    this.peer.on('disconnected', ()=>{ try{ this.peer && !this.peer.destroyed && this.peer.reconnect(); }catch(e){} });
+    this.peer.on('error', e=>{ this.fail(e.type==='peer-unavailable' ? 'Room '+code+' pawa jayni — code ta abar check koro, ar host room khola ache kina dekho.' : 'Connection error: '+e.type); });
+    this.joinTimer=setTimeout(()=>{ if(!this.conn||!this.conn.open) this.fail('Ekhono connect hoyni. Duito device e internet lagbe, ar code thik ache kina dekho.'); }, 15000);
+  },
+  showJoin(code){ this.cleanup(); this.isHost=false; this.openModal('join'); $('joinName').value=$('playerName').value; if(code) $('joinCode').value=code; this.status(code?'Room code ready — apnar naam likhe Join Room chapo':'Enter the 6-letter room code'); setTimeout(()=>$(code?'joinName':'joinCode').focus(),50); },
+  enterRoomView(){
+    $('mpJoinView').classList.add('hidden'); $('mpRoomView').classList.remove('hidden'); $('qrDetails').classList.add('hidden');
+    $('mpTitle').textContent='👥 Team Lobby'; $('roomCode').textContent=this.code;
+    $('hostShare').classList.add('hidden'); $('roomHint').textContent='Connected! Waiting for the host to start the race…';
+    $('mpStartBtn').classList.add('hidden');
+  },
+
+  /* ---------- messaging ---------- */
+  send(m){ // from this device to the room
+    if(this.isHost) this.broadcast(m);
+    else { try{ if(this.conn&&this.conn.open) this.conn.send(m); }catch(e){} }
+  },
+  applyState(id,m){
+    let g=this.ghosts[id];
+    if(!g) g=this.ghosts[id]={dx:m.wx, wx:m.wx, y:m.y, spin:0};
+    Object.assign(g,{wx:m.wx, y:m.y, score:m.score, crashes:m.crashes, speed:m.speed||6});
+  },
+  applyOver(id,m){ this.results[id]={score:m.score, dist:m.dist}; toast(`🏁 ${this.nameOf(id)} finished — ${m.score} pts`); updateGoResult(); },
+  onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==='welcome'){ this.myId=m.id; this.players=m.players; this.enterRoomView(); this.renderPlayers(); this.status('✅ Connected! Host start korle race shuru hobe…'); toast('✅ Joined room '+this.code); }
+    else if(m.t==='full'){ this.fail('Room full (max '+this.MAX+' players).'); }
+    else if(m.t==='lobby'){ this.players=m.players; this.renderPlayers(); }
+    else if(m.t==='start'){ this.results={}; this.ghosts={}; this.countdown(()=>startGame({mode:'mp', seed:m.seed})); }
+    else if(m.t==='s'){ this.applyState(m.id,m); }
+    else if(m.t==='over'){ this.applyOver(m.id,m); }
+  },
+  startRace(){
+    if(!this.isHost) return;
+    if(this.players.length<2){ toast('Kom-pokkhe 1 jon teammate join korte hobe'); return; }
+    const seed=(Math.random()*1e9)|0; this.results={}; this.ghosts={};
+    this.broadcast({t:'start', seed});
+    this.countdown(()=>startGame({mode:'mp', seed}));
+  },
+  sendOver(){ this.results[this.myId]={score:Math.round(GAME.score), dist:Math.round(GAME.distance)}; this.send({t:'over', id:this.myId, score:Math.round(GAME.score), dist:Math.round(GAME.distance)}); },
+
+  /* ---------- in-game ---------- */
+  tick(d){
+    if(MODE.type!=='mp') return;
+    this.sendT-=d;
+    if(this.sendT<=0){ this.sendT=5; this.send({t:'s', id:this.myId, wx:GAME.scrollX+GAME.bike.x, y:GAME.bike.y, score:Math.round(GAME.score), crashes:GAME.crashes, speed:GAME.speed}); }
+    const me=GAME.scrollX+GAME.bike.x; let ahead=0, n=0, nearest=null;
+    for(const id in this.ghosts){
+      const g=this.ghosts[id]; n++;
+      g.wx+=(g.speed||6)*d; g.dx+=(g.wx-g.dx)*0.25*d; g.spin+=0.3*d;
+      if(g.dx>me) ahead++;
+      const gap=Math.abs(g.dx-me); if(!nearest||gap<nearest.gap) nearest={id,gap,ahead:g.dx>me};
+    }
+    if(!n){ $('mpVal').textContent = (this.isHost||this.conn)?'waiting for team…':'disconnected'; return; }
+    const txt = nearest ? `${nearest.ahead?'▲':'▼'} ${this.nameOf(nearest.id)} ${Math.round(nearest.gap/10)}m` : '';
+    $('mpVal').textContent=`#${ahead+1} of ${n+1} · ${txt}`;
+  },
+  draw(){
+    if(MODE.type!=='mp') return;
+    let row=1;
+    for(const id in this.ghosts){
+      const g=this.ghosts[id], x=g.dx-GAME.scrollX, col=this.colorOf(id), nm=this.nameOf(id);
+      if(x<-30||x>W+30){ edgeMarker(x<0?'left':'right', `${nm} ${Math.abs(Math.round((g.dx-(GAME.scrollX+GAME.bike.x))/10))}m`, col, row++); continue; }
+      drawOtherBike(x, H*0.7+g.y-10, col, col, g.spin, 0.65, nm.toUpperCase());
+    }
+  },
+  countdown(fn){
+    $('mpModal').classList.add('hidden'); $('startScreen').classList.add('hidden'); $('gameOverScreen').classList.add('hidden');
+    const el=$('countdown'); el.classList.remove('hidden');
+    let n=3; el.textContent=n; beep(440,.15,'square',.1);
+    const iv=setInterval(()=>{
+      n--;
+      if(n>0){ el.textContent=n; beep(440,.15,'square',.1); }
+      else { clearInterval(iv); el.textContent='GO!'; beep(880,.3,'square',.12); fn(); setTimeout(()=>el.classList.add('hidden'),600); }
+    },800);
+  },
+  leave(){ this.left=true; this.cleanup(); MODE.type='solo'; $('mpModal').classList.add('hidden'); $('gameOverScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); GAME.running=false; },
+};
+
+function publicBase(){
+  const typed = ($('publicUrl').value||'').trim();
+  if(typed) return typed.split('?')[0];
+  const h = location.hostname;
+  if(location.protocol.startsWith('http') && h && !/^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(h)) return location.origin + location.pathname;
+  return '';
+}
+function renderQR(){
+  if(!PEER.isHost || !PEER.code || !PEER.peer || !PEER.peer.open) return;
+  const base = publicBase();
+  if(!base){ $('qrBox').innerHTML = '<div style="color:#000;width:220px;font-size:13px;padding:20px 6px">Paste the public game URL below to show a QR.<br><br>Or the phone can tap <b>Join with code</b>.</div>'; return; }
+  const url = base + '?join=' + PEER.code;
+  try{
+    const q = qrcode(0, 'M'); q.addData(url); q.make();
+    $('qrBox').innerHTML = q.createSvgTag({cellSize:5, margin:2, scalable:true}) + `<div style="color:#000;font-size:10px;margin-top:6px;word-break:break-all;max-width:220px">${url}</div>`;
+  }catch(e){ $('qrBox').textContent = url; }
+}
+
+function updateGoResult(){
+  const el = $('goResult');
+  if(MODE.type==='solo' && RIVAL.on){
+    const g = RIVAL.gapM();
+    el.innerHTML = g<0 ? `🏆 You beat Gemma Rival by ${-g}m!` : `🤖 Gemma Rival wins by ${g}m (crashes: you ${GAME.crashes}, Gemma ${RIVAL.crashes})`;
+  } else if(MODE.type==='mp'){
+    if(!GAME.over) return;
+    const rows=PEER.players.map(p=>({p, r:PEER.results[p.id]}));
+    const done=rows.filter(x=>x.r).sort((a,b)=>b.r.score-a.r.score), wait=rows.filter(x=>!x.r);
+    const medals=['🥇','🥈','🥉'];
+    el.innerHTML = '<ul class="go-board">'+done.map((x,i)=>`<li class="${x.p.id===PEER.myId?'me':''}"><span class="rk">${medals[i]||(i+1)}</span>${esc(x.p.name)}<span class="sc">${x.r.score} pts</span></li>`).join('')+'</ul>'
+      + (wait.length ? `<div style="font-size:12px;color:var(--muted)">⏳ still riding: ${wait.map(x=>esc(x.p.name)).join(', ')}</div>` : '<div style="font-size:12px;color:var(--green)">🏁 Everyone finished!</div>');
+  }
+}
+function esc(t){ return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================================================
+   NEGOTIATION MODE (police / mob)
+   ============================================================ */
+let NEG = {active:false, type:'police', turn:0, history:[]};
+
+async function triggerNegotiation(type){
+  if(GAME.inNegotiation || GAME.over) return;
+  GAME.inNegotiation = true;
+  NEG.active = true; NEG.type = type; NEG.turn = 0; NEG.history = [];
+  pushEvent('negotiation_start',{type});
+  addGraphNode('neg_'+NEG.type, NEG.type+' negotiation', 'neg');
+  addGraphEdge('world','neg_'+NEG.type);
+  addGraphEdge('neg_'+NEG.type,'ai');
+
+  $('negTitle').textContent = type==='police' ? '🚔 POLICE STOP!' : '😠 ANGRY MOB!';
+  $('negLead').textContent = type==='police'
+    ? 'The traffic police caught you. Talk, bribe, or charm your way out — Gemma will react.'
+    : 'You crashed into someone and the crowd is angry. Negotiate before they tip your bike!';
+  $('negModal').classList.remove('hidden');
+  $('negChat').innerHTML = '<div class="neg-msg police"><span class="who">Police</span> <span class="typing"></span></div>';
+
+  const opener = await aiGenerate(
+    `You are a ${type==='police'?'corrupt Bangladeshi traffic police':'angry Bangladeshi street mob member'} who just stopped a reckless bike rider in an arcade game. Say ONE aggressive/funny opening line demanding a bribe or apology (max 25 words). Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}. Just the dialogue.`,
+    {max:60, temp:0.95}
+  ) || pick(type==='police'?FALLBACK.police:FALLBACK.crowd);
+  NEG.history.push({role:'foe', text:opener});
+  $('negChat').innerHTML = `<div class="neg-msg ${type==='police'?'police':'crowd'}"><span class="who">${type==='police'?'Police':'Mob'}</span>${opener}</div>`;
+  speakText(opener, STATE.uiLang==='bn'?'bn':'en');
+  showNegOptions();
+}
+
+async function showNegOptions(){
+  const opts = await aiGenerate(
+    `Arcade bike game negotiation. The ${NEG.type} just said: "${NEG.history[NEG.history.length-1].text}". Generate 3 short player response options (each max 12 words), one clever/bribe, one threatening, one funny. Format as a numbered list 1. 2. 3. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}.`,
+    {max:90, temp:0.95}
+  );
+  const optsEl = $('negOptions');
+  optsEl.innerHTML = '';
+  let list = opts ? opts.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(s=>s.length>2).slice(0,3) : [];
+  if(list.length<3) list = list.concat(['Bribe with 500 taka','Threaten to call MP uncle','Crack a joke']).slice(0,3);
+  list.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className='neg-opt'; b.textContent = opt;
+    b.onclick = ()=> respondNegotiation(opt);
+    optsEl.appendChild(b);
+  });
+}
+
+async function respondNegotiation(choice){
+  $('negOptions').innerHTML = '<div style="text-align:center;color:var(--muted);padding:10px">Gemma is thinking... 🤔</div>';
+  NEG.history.push({role:'player', text:choice});
+  $('negChat').innerHTML += `<div class="neg-msg player"><span class="who">You</span>${choice}</div>`;
+  speakText(choice, STATE.uiLang==='bn'?'bn':'en');
+
+  const result = await aiGenerate(
+    `Arcade bike game. Player chose: "${choice}" in a ${NEG.type} negotiation. As the ${NEG.type}, respond in ONE line (max 25 words) and decide OUTCOME: [LET_GO], [BRIBE:amount], [CHASE], or [ESCAPE_FAILED]. Reply format: <dialogue> | OUTCOME: <one of those>. Reply in ${STATE.uiLang==='bn'?'Bangla':'English'}.`,
+    {max:80, temp:0.95}
+  );
+  let dialogue = result || 'Hmm... fine, go. Just go. | OUTCOME: LET_GO';
+  const m = dialogue.match(/(.+?)\s*\|\s*OUTCOME:\s*(\w+(?::\d+)?)/);
+  let outcome='LET_GO';
+  if(m){ dialogue=m[1].trim(); outcome=m[2].trim(); }
+  NEG.history.push({role:'foe', text:dialogue});
+  $('negChat').innerHTML += `<div class="neg-msg ${NEG.type==='police'?'police':'crowd'}"><span class="who">${NEG.type==='police'?'Police':'Mob'}</span>${dialogue}</div>`;
+  speakText(dialogue, STATE.uiLang==='bn'?'bn':'en');
+  $('negChat').scrollTop = $('negChat').scrollHeight;
+
+  // resolve outcome
+  setTimeout(()=> resolveNegotiation(outcome), 1200);
+}
+
+function resolveNegotiation(outcome){
+  let msg='', penalty=0, ok=true;
+  if(outcome.startsWith('LET_GO')){ msg='✅ You got off! Ride on.'; }
+  else if(outcome.startsWith('BRIBE')){
+    const amt = parseInt((outcome.match(/:(\d+)/)||[])[1]||'200');
+    penalty = amt; msg=`💸 You bribed ${amt} taka. (Score -${Math.round(penalty/5)})`;
+  }
+  else if(outcome.startsWith('CHASE')){ msg='🏃 They gave chase! Speed up!'; GAME.speed += 2; }
+  else if(outcome.startsWith('ESCAPE_FAILED')){ msg='💢 Escape failed! Crash penalty.'; crash({type:'negotiation'}); }
+  else msg='✅ Released.';
+  GAME.score = Math.max(0, GAME.score - penalty/5);
+  toast(msg);
+  pushEvent('negotiation_end',{outcome, penalty, type:NEG.type});
+
+  // continue button
+  $('negOptions').innerHTML = `<button class="btn btn-accent" id="negContBtn">Continue Riding →</button>`;
+  $('negContBtn').onclick = ()=>{
+    $('negModal').classList.add('hidden');
+    GAME.inNegotiation = false; NEG.active=false;
+  };
+}
+
+$('negFleeBtn').onclick = ()=>{
+  $('negModal').classList.add('hidden');
+  GAME.inNegotiation=false; NEG.active=false;
+  if(Math.random()<0.5){ crash({type:'flee'}); toast('💥 They caught you fleeing!'); }
+  else { toast('🏃 You escaped!'); GAME.speed += 3; }
+};
+
+/* ============================================================
+   SPEECH SYNTHESIS (Web Speech API)
+   ============================================================ */
+function speakText(text, lang='en'){
+  if(STATE.voice==='off') return;
+  if(!('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang==='bn' ? 'bn-BD' : 'en-US';
+    u.rate = 1.05; u.pitch = 1.1;
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v=>v.lang.startsWith(lang==='bn'?'bn':'en'));
+    if(v) u.voice = v;
+    u.onstart = ()=> STATE.speaking=true;
+    u.onend = ()=> STATE.speaking=false;
+    u.onerror = ()=> STATE.speaking=false;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = ()=>{};
+
+/* ============================================================
+   GRAPHIFY — Workflow Graph + PNG export
+   ============================================================ */
+function addGraphNode(id,label,type){
+  if(STATE.graphNodes.find(n=>n.id===id)) return;
+  STATE.graphNodes.push({id,label,type});
+}
+function addGraphEdge(from,to){
+  if(STATE.graphEdges.find(e=>e.from===from&&e.to===to)) return;
+  STATE.graphEdges.push({from,to});
+}
+function pushEvent(type,data){
+  STATE.events.push({t:Date.now(),type,data});
+  // grow graph: connect events to nodes
+  if(type==='crash'){ addGraphNode('crash_'+STATE.events.length,'Crash','event'); addGraphEdge('player','crash_'+STATE.events.length); addGraphEdge('crash_'+STATE.events.length,'world'); }
+  if(type==='ai_news'){ addGraphEdge('ai','world'); }
+  if(type==='fuel_pickup'){ addGraphNode('fuel_'+STATE.events.length,'Fuel','event'); addGraphEdge('player','fuel_'+STATE.events.length); }
+  if(type==='coin'){ addGraphNode('coin_'+STATE.events.length,'Coin','event'); addGraphEdge('player','coin_'+STATE.events.length); }
+  if(type==='negotiation_end'){ addGraphEdge('neg_'+(data?.type||'police'),'world'); }
+}
+
+function drawGraph(canvasEl){
+  const c = canvasEl.getContext('2d');
+  const W = canvasEl.width, H = canvasEl.height;
+  c.fillStyle='#0a0e1a'; c.fillRect(0,0,W,H);
+  // grid bg
+  c.strokeStyle='rgba(42,53,86,.4)'; c.lineWidth=1;
+  for(let x=0;x<W;x+=30){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}
+  for(let y=0;y<H;y+=30){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+
+  // title
+  c.fillStyle='#08d9d6'; c.font='bold 16px sans-serif';
+  c.fillText('Graphify — AI Workflow Graph', 14, 22);
+  c.fillStyle='#8a92b8'; c.font='11px sans-serif';
+  c.fillText(`Nodes: ${STATE.graphNodes.length} • Edges: ${STATE.graphEdges.length} • Events: ${STATE.events.length}`, 14, 40);
+
+  // layout: assign positions by type clusters
+  const clusters = {
+    core:{x:W*0.5, y:H*0.5, color:'#ff2e63'},
+    input:{x:W*0.15, y:H*0.3, color:'#08d9d6'},
+    state:{x:W*0.85, y:H*0.3, color:'#ffd369'},
+    ai:{x:W*0.5, y:H*0.15, color:'#4ecca3'},
+    event:{x:W*0.5, y:H*0.85, color:'#ffa502'},
+    neg:{x:W*0.2, y:H*0.7, color:'#ff4757'},
+    chain:{x:W*0.85, y:H*0.68, color:'#9945ff'},
+  };
+  // position nodes
+  const positioned = STATE.graphNodes.map((n,i)=>{
+    const cl = clusters[n.type] || clusters.event;
+    const off = (i%5 - 2)*40;
+    const j = ((i*9301+49297)%233280)/233280; // deterministic jitter: same graph every render
+    return {...n, x:cl.x+off+ (j*30-15), y:cl.y+off*0.6 + (((i*7)%11)/11*30-15)};
+  });
+  // dedupe by id
+  const map = {}; positioned.forEach(n=>{ if(!map[n.id]) map[n.id]=n; });
+
+  // draw edges
+  c.lineWidth=1.5;
+  STATE.graphEdges.forEach(e=>{
+    const a=map[e.from], b=map[e.to];
+    if(!a||!b) return;
+    c.strokeStyle='rgba(8,217,214,.3)';
+    c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke();
+    // arrowhead
+    const ang = Math.atan2(b.y-a.y, b.x-a.x);
+    c.fillStyle='rgba(8,217,214,.5)';
+    c.beginPath();
+    c.moveTo(b.x,b.y);
+    c.lineTo(b.x-8*Math.cos(ang-0.4), b.y-8*Math.sin(ang-0.4));
+    c.lineTo(b.x-8*Math.cos(ang+0.4), b.y-8*Math.sin(ang+0.4));
+    c.closePath(); c.fill();
+  });
+
+  // draw nodes
+  Object.values(map).forEach(n=>{
+    const cl = clusters[n.type]||clusters.event;
+    c.fillStyle = cl.color;
+    c.beginPath(); c.arc(n.x, n.y, 14, 0, Math.PI*2); c.fill();
+    c.strokeStyle='#0a0e1a'; c.lineWidth=2; c.stroke();
+    // label
+    c.fillStyle='#eaeaea'; c.font='10px sans-serif'; c.textAlign='center';
+    c.fillText(n.label.slice(0,16), n.x, n.y+28);
+  });
+
+  // legend
+  c.textAlign='left'; c.font='10px sans-serif';
+  let lx=14, ly=H-20;
+  Object.entries({Game:'#ff2e63', Player:'#08d9d6', World:'#ffd369', 'Gemma AI':'#4ecca3', Events:'#ffa502', Negotiation:'#ff4757', Solana:'#9945ff'}).forEach(([k,col])=>{
+    c.fillStyle=col; c.beginPath(); c.arc(lx+6, ly, 5, 0, Math.PI*2); c.fill();
+    c.fillStyle='#eaeaea'; c.fillText(k, lx+16, ly+4);
+    lx += 96;
+  });
+}
+
+function openGraphModal(){
+  $('graphModal').classList.remove('hidden');
+  drawGraph($('graphCanvas'));
+}
+function downloadGraphPng(){
+  // also draw to a high-res canvas
+  const hi = document.createElement('canvas');
+  hi.width = 1400; hi.height = 760;
+  // scale our draw to hi-res by re-rendering
+  const orig = $('graphCanvas');
+  const tmp = orig;
+  // simplest: just use the visible canvas
+  const a = document.createElement('a');
+  a.download = 'amar-baper-rasta-graph.png';
+  a.href = orig.toDataURL('image/png');
+  a.click();
+  toast('📊 Graph PNG downloaded');
+}
+
+/* ============================================================
+   UI WIRING
+   ============================================================ */
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+$('settingsBtn').onclick = ()=> $('settingsModal').classList.remove('hidden');
+$('closeSettingsBtn').onclick = ()=> $('settingsModal').classList.add('hidden');
+$('saveSettingsBtn').onclick = async ()=>{
+  STATE.provider = $('providerSel').value;
+  STATE.ollamaUrl = $('ollamaUrl').value.replace(/\/$/,'');
+  STATE.ollamaModel = $('ollamaModel').value.trim();
+  STATE.googleKey = $('googleKey').value.trim();
+  STATE.googleModel = $('googleModelSel').value;
+  STATE.voice = $('voiceSel').value;
+  STATE.uiLang = $('uiLangSel').value;
+  try{ localStorage.setItem('abr_settings', JSON.stringify({
+    provider:STATE.provider, ollamaUrl:STATE.ollamaUrl, ollamaModel:STATE.ollamaModel,
+    googleKey:STATE.googleKey, googleModel:STATE.googleModel, voice:STATE.voice, uiLang:STATE.uiLang
+  })); }catch(e){}
+  $('settingsModal').classList.add('hidden');
+  toast('⏳ Testing AI connection...');
+  const test = await aiGenerate('Reply with exactly: OK', {max:5, temp:0.1});
+  if(test){ toast('✅ AI online: '+STATE.aiModel); }
+  else toast('⚠️ AI offline — using fallback content. Game still works!');
+};
+$('menuBtn').onclick = ()=> $('settingsModal').classList.remove('hidden');
+$('graphBtn').onclick = openGraphModal;
+$('graphBtn2').onclick = openGraphModal;
+$('closeGraphBtn').onclick = ()=> $('graphModal').classList.add('hidden');
+$('dlGraphBtn').onclick = downloadGraphPng;
+$('restartBtn').onclick = ()=>{
+  if(MODE.type==='mp' && (PEER.isHost ? PEER.players.length>=2 : (PEER.conn && PEER.conn.open))){
+    if(PEER.isHost) PEER.startRace(); else { PEER.send({t:'again'}); toast('Host ke rematch er request pathano holo…'); }
+  } else startGame({mode:'solo'});
+};
+$('startBtn').onclick = ()=> startGame({mode:'solo'});
+function saveName(v){ try{ localStorage.setItem('abr_name', v); }catch(e){} }
+$('playerName').addEventListener('input', ()=>saveName($('playerName').value.trim()));
+$('hostBtn').onclick = ()=>{ audioInit(); PEER.host(); };
+$('joinBtn').onclick = ()=>{ audioInit(); PEER.showJoin(''); };
+$('joinGoBtn').onclick = ()=>{ const n=$('joinName').value.trim(); if(n){ $('playerName').value=n; saveName(n); } PEER.join($('joinCode').value); };
+$('joinCode').addEventListener('keydown', e=>{ if(e.key==='Enter') $('joinGoBtn').click(); });
+$('joinName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('joinCode').focus(); });
+$('mpStartBtn').onclick = ()=> PEER.startRace();
+$('mpCancelBtn').onclick = ()=> PEER.leave();
+$('goLobbyBtn').onclick = ()=>{ PEER.openModal(PEER.isHost?true:false); PEER.renderPlayers(); if(!PEER.isHost) PEER.status('Host rematch start korle race shuru hobe…'); };
+function inviteText(){
+  const base=publicBase(); const link = base ? '\n'+base+'?join='+PEER.code : '';
+  return '🏍️ Amar Baper Rasta (Crack Platoon) — amar room e join koro!\nRoom code: '+PEER.code+link;
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+  return new Promise((res,rej)=>{ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); res(); }catch(e){ rej(e); } });
+}
+$('copyCodeBtn').onclick = ()=>{ if(!PEER.code) return; copyText(PEER.code).then(()=>toast('📋 Code copied: '+PEER.code)).catch(()=>toast('Code: '+PEER.code)); };
+$('shareBtn').onclick = ()=>{
+  if(!PEER.code) return; const text=inviteText();
+  if(navigator.share){ navigator.share({title:'Amar Baper Rasta', text}).catch(()=>{}); }
+  else copyText(text).then(()=>toast('📤 Invite copied — paste it in WhatsApp / Messenger')).catch(()=>toast(text));
+};
+$('publicUrl').addEventListener('input', ()=>{ try{ localStorage.setItem('abr_public_url', $('publicUrl').value.trim()); }catch(e){} renderQR(); });
+$('goGraphBtn').onclick = openGraphModal;
+
+// Enter = start game (only while the start screen is the top-most layer)
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||tag==='button') return;
+  if($('startScreen').classList.contains('hidden')) return;
+  if(!$('settingsModal').classList.contains('hidden')||!$('mpModal').classList.contains('hidden')||!$('graphModal').classList.contains('hidden')||!$('solModal').classList.contains('hidden')) return;
+  e.preventDefault(); $('startBtn').click();
+});
+
+document.querySelectorAll('.sb-tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+
+$('langBtn').onclick = ()=>{
+  STATE.uiLang = STATE.uiLang==='en'?'bn':(STATE.uiLang==='bn'?'both':'en');
+  toast('UI Lang: '+STATE.uiLang);
+};
+
+$('testAiBtn').onclick = async ()=>{
+  toast('⏳ Testing Gemma...');
+  const r = await aiGenerate('Say "Amar Baper Rasta ready!" in 5 words or less.', {max:15, temp:0.5});
+  if(r){ addCard('ai', r, false, true); toast('✅ AI works!'); }
+  else { addCard('ai', '⚠️ AI offline. Using fallback content for demo. Check Settings → AI.', false, false); toast('⚠️ AI offline — see settings'); }
+};
+
+/* ============================================================
+   SOLANA — on-chain run receipts + leaderboard (no backend)
+   A finished run can be sent as ONE Solana transaction, signed by
+   the rider's wallet:
+     1) a System transfer of 0 lamports to the leaderboard PDA, so
+        the transaction is indexed under that address, and
+     2) an SPL Memo holding the run as JSON: name, score, distance,
+        crashes, air time, mode, result vs Gemma Rival, wallet and
+        Gemma's end-of-run headline.
+   The leaderboard is rebuilt in the browser from
+   getSignaturesForAddress(PDA), which returns each memo. The top
+   entries are re-checked with getParsedTransaction: the wallet in
+   the memo must be the transaction's fee payer and signer.
+   ============================================================ */
+const SOL = {
+  MEMO_PROGRAM:'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
+  LB_SEED:'amar-baper-rasta-leaderboard-v1',
+  PREFIX:'ABR1|',
+  CLUSTERS:{devnet:'https://api.devnet.solana.com', testnet:'https://api.testnet.solana.com', localnet:'http://127.0.0.1:8899'},
+  cfg:{cluster:'devnet', rpc:''},
+  kind:null, walletName:'', provider:null, burner:null, pubkey:null,
+  balance:null, lastRun:null, recording:false, board:[], boardAt:0, _paused:false,
+
+  ready(){ return typeof solanaWeb3!=='undefined'; },
+  rpcUrl(){ return (this.cfg.cluster==='custom' && this.cfg.rpc) ? this.cfg.rpc : (this.CLUSTERS[this.cfg.cluster]||this.CLUSTERS.devnet); },
+  netLabel(){ return this.cfg.cluster==='custom' ? 'custom RPC' : this.cfg.cluster; },
+  conn(){
+    const url=this.rpcUrl();
+    if(!this._conn || this._connUrl!==url){ this._connUrl=url; this._conn=new solanaWeb3.Connection(url,'confirmed'); }
+    return this._conn;
+  },
+  lbAddress(){
+    if(!this._lb) this._lb = solanaWeb3.PublicKey.findProgramAddressSync([new TextEncoder().encode(this.LB_SEED)], new solanaWeb3.PublicKey(this.MEMO_PROGRAM))[0];
+    return this._lb;
+  },
+  explorer(kind,id){
+    const c=this.cfg.cluster;
+    const q = (c==='devnet'||c==='testnet') ? '?cluster='+c : '?cluster=custom&customUrl='+encodeURIComponent(c==='localnet'?'http://localhost:8899':this.rpcUrl());
+    return `https://explorer.solana.com/${kind}/${id}${q}`;
+  },
+  short(a){ a=String(a||''); return a.length>10 ? a.slice(0,4)+'…'+a.slice(-4) : a; },
+  ago(ts){ const s=Math.max(0,Date.now()/1000-ts); if(s<90) return 'just now'; if(s<5400) return Math.round(s/60)+'m ago'; if(s<172800) return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; },
+  msg(html){ const el=$('solMsg'); if(el) el.innerHTML=html||''; },
+  setGoStatus(html){ $('goChainStatus').innerHTML=html; },
+
+  /* ---------- wallets ---------- */
+  injected(){
+    const w=window, out=[], seen=new Set();
+    const add=(name,p)=>{ if(p && typeof p.connect==='function' && !seen.has(p)){ seen.add(p); out.push({name,p}); } };
+    add('Phantom', w.phantom && w.phantom.solana);
+    add('Solflare', (w.solflare && w.solflare.isSolflare) ? w.solflare : null);
+    add('Backpack', w.backpack && (w.backpack.solana || w.backpack));
+    if(w.solana) add(w.solana.isPhantom ? 'Phantom' : 'Solana wallet', w.solana);
+    return out;
+  },
+  async connectInjected(name, silent){
+    const found=this.injected().find(x=>x.name===name);
+    if(!found){ if(!silent) toast('⚠️ '+name+' not found'); return; }
+    try{
+      const res = await (silent ? found.p.connect({onlyIfTrusted:true}) : found.p.connect());
+      const pk = (res && res.publicKey) || found.p.publicKey;
+      if(!pk) throw new Error('wallet returned no public key');
+      this.provider=found.p; this.kind='injected'; this.walletName=name; this.burner=null;
+      this.pubkey=new solanaWeb3.PublicKey(pk.toString());
+      if(!found.p._abrHooked && typeof found.p.on==='function'){
+        found.p._abrHooked=true;
+        try{ found.p.on('accountChanged', npk=>{ if(this.provider!==found.p) return; if(npk){ this.pubkey=new solanaWeb3.PublicKey(npk.toString()); this.refreshBalance(); } else this.disconnect(); }); }catch(e){}
+      }
+      this.savePref(); if(!silent) toast('◎ '+name+' connected'); this.afterConnect();
+    }catch(e){ if(!silent) toast('⚠️ '+name+': '+(e.message||e)); }
+  },
+  useBurner(silent){
+    let kp=null;
+    try{ const s=JSON.parse(localStorage.getItem('abr_burner')||'null'); if(Array.isArray(s)&&s.length===64) kp=solanaWeb3.Keypair.fromSecretKey(Uint8Array.from(s)); }catch(e){}
+    if(!kp){ kp=solanaWeb3.Keypair.generate(); try{ localStorage.setItem('abr_burner', JSON.stringify(Array.from(kp.secretKey))); }catch(e){} }
+    this.burner=kp; this.provider=null; this.kind='burner'; this.walletName='Burner wallet'; this.pubkey=kp.publicKey;
+    this.savePref(); if(!silent){ toast('🔥 Burner wallet ready'); this.msg('🔥 Burner created. Press <b>Get devnet SOL</b> to fund it (fees are ≈0.000005 SOL per run).'); }
+    this.afterConnect();
+  },
+  disconnect(){
+    try{ if(this.provider && this.provider.disconnect) this.provider.disconnect(); }catch(e){}
+    this.kind=null; this.provider=null; this.burner=null; this.pubkey=null; this.balance=null; this.walletName='';
+    this.savePref(); this.msg(''); this.refreshWallet(); this.renderBoard();
+  },
+  savePref(){ try{ localStorage.setItem('abr_sol', JSON.stringify({cluster:this.cfg.cluster, rpc:this.cfg.rpc, kind:this.kind, wallet:this.walletName})); }catch(e){} },
+  afterConnect(){ this.refreshWallet(); this.refreshBalance(); this.renderBoard(); },
+  async refreshBalance(){
+    if(!this.pubkey || !this.ready()) return;
+    try{ this.balance = await this.conn().getBalance(this.pubkey); }catch(e){ this.balance=null; }
+    this.refreshWallet();
+  },
+  async airdrop(){
+    if(!this.pubkey) return;
+    const btn=$('solAirdropBtn'); btn.disabled=true;
+    this.msg('🚰 Requesting 1 SOL from the '+esc(this.netLabel())+' faucet…');
+    try{
+      const sig = await this.conn().requestAirdrop(this.pubkey, solanaWeb3.LAMPORTS_PER_SOL);
+      await this.waitConfirm(sig, 45);
+      this.msg('✅ Airdrop landed. You can stamp runs now.');
+    }catch(e){
+      const a=this.pubkey.toBase58();
+      copyText(a).catch(()=>{});
+      this.msg(`⚠️ The public faucet is rate-limited (${esc((e.message||String(e)).slice(0,90))}). Your address is copied: paste it at <a href="https://faucet.solana.com/" target="_blank" rel="noopener">faucet.solana.com</a> (choose Devnet), then come back.`);
+    }
+    btn.disabled=!this.pubkey;
+    this.refreshBalance();
+  },
+
+  /* ---------- UI ---------- */
+  refreshWallet(){
+    const on=!!this.pubkey, a=on?this.pubkey.toBase58():'';
+    const b=$('walletBtn'); b.textContent = on ? '◎ '+this.short(a) : '◎ Wallet'; b.classList.toggle('on',on);
+    $('startWalletBtn').textContent = on ? '◎ '+this.short(a)+' ✓' : '◎ Connect Wallet';
+    const card=$('solWalletCard');
+    if(!this.ready()) card.textContent='⚠️ The Solana library did not load. Check your connection or the lib/ folder.';
+    else if(on){
+      const bal = this.balance==null ? '…' : (this.balance/solanaWeb3.LAMPORTS_PER_SOL).toFixed(4)+' SOL';
+      card.innerHTML = `<div>${esc(this.walletName)} · <span style="color:var(--muted)">${esc(this.netLabel())}</span></div><div class="addr"><a href="${this.explorer('address',a)}" target="_blank" rel="noopener">${a}</a></div><div>Balance: <span class="bal">${bal}</span></div>`;
+    } else card.textContent='Not connected. Pick a wallet below.';
+    const list=this.ready()?this.injected():[];
+    $('solConnectBtns').innerHTML = list.map(x=>`<button class="btn btn-sol" data-w="${esc(x.name)}">👛 ${esc(x.name)}</button>`).join('')
+      + `<button class="btn btn-accent" data-w="__burner">🔥 Burner wallet</button>`
+      + (list.length ? '' : `<a class="btn btn-ghost" style="text-align:center;text-decoration:none;color:var(--text);margin-top:8px;padding:9px;font-size:13px" href="https://phantom.com/download" target="_blank" rel="noopener">⬇ Get Phantom</a>`);
+    $('solConnectBtns').querySelectorAll('button[data-w]').forEach(btn=>btn.onclick=()=> btn.dataset.w==='__burner' ? this.useBurner() : this.connectInjected(btn.dataset.w));
+    $('solAirdropBtn').disabled=!on; $('solDisconnectBtn').disabled=!on;
+    $('goChainNet').textContent=this.netLabel();
+    if(GAME.over && !this.recording && this.lastRun && !this.lastRun.sig){
+      this.setGoStatus(on ? `Ready: <b>${esc(this.short(a))}</b> will sign one transaction with this run's score and Gemma's headline.` : 'Connect a wallet to stamp this run (and Gemma\'s headline) on Solana.');
+    }
+  },
+  syncNetUI(){
+    $('solClusterSel').value=this.cfg.cluster;
+    $('solRpcField').classList.toggle('hidden', this.cfg.cluster!=='custom');
+    $('solRpcInput').value=this.cfg.rpc||'';
+    const l=$('solLbLink');
+    if(this.ready()){ const lb=this.lbAddress().toBase58(); l.textContent=lb; l.href=this.explorer('address',lb); }
+  },
+  setCluster(v){
+    this.cfg.cluster=v; this.board=[]; this.balance=null; this._conn=null;
+    this.savePref(); this.syncNetUI(); this.refreshWallet(); this.refreshBalance(); this.loadBoard();
+  },
+  open(){
+    if(GAME.running && !GAME.over && !GAME.paused && MODE.type==='solo'){ GAME.paused=true; this._paused=true; }
+    $('solModal').classList.remove('hidden');
+    if(!this.ready()){ this.refreshWallet(); this.renderBoard('⚠️ Solana library not loaded.'); return; }
+    this.syncNetUI(); this.refreshWallet(); this.refreshBalance();
+    if(Date.now()-this.boardAt>15000) this.loadBoard(); else this.renderBoard();
+  },
+  close(){
+    $('solModal').classList.add('hidden');
+    if(this._paused){ GAME.paused=false; this._paused=false; }
+  },
+
+  /* ---------- run receipts ---------- */
+  onRunOver(){
+    const r = (MODE.type==='solo' && RIVAL.on) ? (RIVAL.gapM()<0 ? 'W' : 'L') : undefined;
+    this.lastRun = { n:(($('playerName').value||'').trim().slice(0,14))||'Rider', s:Math.round(GAME.score), d:Math.round(GAME.distance), x:GAME.crashes, a:Math.round(GAME.flyTime/60), m:MODE.type, r, sig:null };
+    const btn=$('goRecordBtn'); btn.disabled=false; btn.textContent='⛓️ Stamp run on Solana';
+    this.refreshWallet();
+  },
+  headline(){
+    const t=(($('goNews').querySelector('.body')||{}).textContent||'').trim();
+    return (!t || /^Loading AI headline/.test(t)) ? '' : t;
+  },
+  buildMemo(run){
+    let h=Array.from(this.headline()).slice(0,120);
+    const make=()=>this.PREFIX+JSON.stringify({v:1, n:run.n, s:run.s, d:run.d, x:run.x, a:run.a, m:run.m, r:run.r, w:this.pubkey.toBase58(), h:h.join('')});
+    let memo=make();
+    while(new TextEncoder().encode(memo).length>520 && h.length){ h=h.slice(0,-8); memo=make(); }
+    return memo;
+  },
+  async waitConfirm(sig, maxSec=60){
+    const c=this.conn();
+    for(let i=0;i<maxSec;i++){
+      const res = await c.getSignatureStatuses([sig]);
+      const s = res && res.value && res.value[0];
+      if(s){
+        if(s.err) throw new Error('transaction failed on-chain: '+JSON.stringify(s.err));
+        if(s.confirmationStatus==='confirmed' || s.confirmationStatus==='finalized') return s;
+      }
+      await new Promise(r=>setTimeout(r,1000));
+    }
+    throw new Error('timed out waiting for confirmation. It may still land, so check the explorer.');
+  },
+  async recordRun(){
+    const run=this.lastRun;
+    if(!this.ready()){ toast('⚠️ Solana library not loaded'); return; }
+    if(!run){ toast('Finish a run first'); return; }
+    if(run.sig){ toast('✅ Already stamped on Solana'); return; }
+    if(!this.pubkey){ this.open(); toast('◎ Connect a wallet first'); return; }
+    if(this.recording) return;
+    this.recording=true;
+    const btn=$('goRecordBtn'); btn.disabled=true;
+    const W3=solanaWeb3, c=this.conn(), pk=this.pubkey;
+    try{
+      this.setGoStatus('⏳ Checking balance…');
+      this.balance = await c.getBalance(pk); this.refreshWallet();
+      if(this.balance < 10000){
+        this.setGoStatus(`⚠️ This wallet needs a little ${esc(this.netLabel())} SOL for the network fee (≈0.000005 SOL). Open <b>◎ Leaderboard → Get devnet SOL</b>, then press Stamp again.`);
+        btn.disabled=false; return;
+      }
+      const memo=this.buildMemo(run);
+      const tx=new W3.Transaction().add(
+        // Memo cost grows with length (~450 CU/byte for Bangla text), so raise the 200k default.
+        // Setting a limit without a price adds no fee.
+        W3.ComputeBudgetProgram.setComputeUnitLimit({units:400000}),
+        W3.SystemProgram.transfer({fromPubkey:pk, toPubkey:this.lbAddress(), lamports:0}),
+        new W3.TransactionInstruction({programId:new W3.PublicKey(this.MEMO_PROGRAM), keys:[{pubkey:pk, isSigner:true, isWritable:false}], data:new TextEncoder().encode(memo)})
+      );
+      const {blockhash}=await c.getLatestBlockhash('confirmed');
+      tx.recentBlockhash=blockhash; tx.feePayer=pk;
+      this.setGoStatus(this.kind==='burner' ? '✍️ Signing with your burner wallet…' : '✍️ Approve the transaction in '+esc(this.walletName)+'…');
+      let signed;
+      if(this.kind==='burner'){ tx.sign(this.burner); signed=tx; }
+      else signed=await this.provider.signTransaction(tx);
+      const sig=await c.sendRawTransaction(signed.serialize(), {preflightCommitment:'confirmed'});
+      this.setGoStatus(`📡 Sent. Waiting for confirmation… <a href="${this.explorer('tx',sig)}" target="_blank" rel="noopener">view tx ↗</a>`);
+      await this.waitConfirm(sig);
+      run.sig=sig;
+      pushEvent('solana_tx',{sig});
+      addGraphNode('solana','Solana Tx','chain'); addGraphEdge('game','solana'); addGraphEdge('ai','solana');
+      btn.textContent='✅ Stamped on Solana';
+      const link=`<a href="${this.explorer('tx',sig)}" target="_blank" rel="noopener">${this.short(sig)} ↗</a>`;
+      this.setGoStatus(`✅ Run stamped on Solana ${esc(this.netLabel())}: ${link}<br><span style="color:var(--muted)">Reading the on-chain leaderboard…</span>`);
+      this.refreshBalance();
+      await this.loadBoard();
+      const total=this.board.length, idx=this.board.findIndex(x=>x.d.w===pk.toBase58());
+      this.setGoStatus(`✅ Run stamped on Solana ${esc(this.netLabel())}: ${link}<br>🏆 Your wallet ranks <b>${idx>=0?'#'+(idx+1)+' of '+total:'(not indexed yet, refresh in a moment)'}</b> on the on-chain leaderboard.`);
+      this.aiReact(run, idx+1, total);
+    }catch(e){
+      const m=(e && e.message) || String(e);
+      this.setGoStatus('⚠️ '+esc(/reject|denied|cancel/i.test(m) ? 'You declined the request in the wallet.' : m));
+      btn.disabled=false;
+    }finally{ this.recording=false; }
+  },
+  async aiReact(run, rank, total){
+    const lang = STATE.uiLang==='bn' ? 'Bangla' : 'English';
+    const prompt = `You are a sarcastic Dhaka street commentator. Rider "${run.n}" just carved a score of ${run.s} (crashes ${run.x}) permanently onto the Solana blockchain${rank>0?`, ranking #${rank} of ${total} riders on the on-chain leaderboard`:''}. React in one punchy line, max 22 words. Reply in ${lang}. No hashtags.`;
+    let out = await aiGenerate(prompt, {max:50, temp:0.95});
+    const fromAI=!!out;
+    if(!out) out = rank===1 ? `${run.n} is #1 on-chain. Even the blockchain is scared of this driving.` : `${run.n}'s ${run.s} points are now immortal on Solana. The potholes remember too.`;
+    addCard('ai', '⛓️ '+out, STATE.uiLang==='bn' && fromAI, true, fromAI);
+  },
+
+  /* ---------- leaderboard ---------- */
+  parseMemo(m){
+    const i=String(m).indexOf(this.PREFIX); if(i<0) return null;
+    let txt=m.slice(i+this.PREFIX.length);
+    const end=txt.lastIndexOf('}'); if(end<0) return null;
+    try{
+      const d=JSON.parse(txt.slice(0,end+1));
+      if(typeof d.s!=='number' || !isFinite(d.s)) return null;
+      d.n=String(d.n||'Rider').slice(0,14);
+      return d;
+    }catch(e){ return null; }
+  },
+  loadBoard(){
+    if(!this.ready()){ this.renderBoard('⚠️ Solana library not loaded.'); return Promise.resolve(); }
+    if(this._loading) return this._loading;
+    this.renderBoard(null, true);
+    this._loading=(async()=>{
+      try{
+        const c=this.conn();
+        const sigs=await c.getSignaturesForAddress(this.lbAddress(), {limit:1000});
+        const all=[];
+        for(const s of sigs){
+          if(s.err || !s.memo) continue;
+          const d=this.parseMemo(s.memo); if(!d) continue;
+          all.push({sig:s.signature, t:s.blockTime, d, verified:null});
+        }
+        all.sort((a,b)=>b.d.s-a.d.s);
+        // best run per wallet, ignoring rows already proven forged
+        const view=()=>{ const seen=new Set(), out=[]; for(const r of all){ if(r.verified===false) continue; const k=r.d.w||r.sig; if(seen.has(k)) continue; seen.add(k); out.push(r); } return out; };
+        this.board=view();
+        this.boardAt=Date.now();
+        this.renderBoard();
+        // Verify the top 10: the wallet named in the memo must be the fee payer + signer.
+        // Forged rows (memo claims someone else's wallet) are dropped and the next rows checked.
+        let checked=0;
+        while(checked<40){
+          const todo=this.board.slice(0,10).filter(r=>r.verified===null && !r.tried);
+          if(!todo.length) break;
+          checked+=todo.length;
+          await Promise.all(todo.map(async row=>{
+            row.tried=true;
+            try{
+              const tx=await c.getParsedTransaction(row.sig, {maxSupportedTransactionVersion:0, commitment:'confirmed'});
+              const k=tx && tx.transaction.message.accountKeys[0];
+              row.verified = !!(k && k.signer && k.pubkey.toBase58()===row.d.w);
+            }catch(e){ row.verified=null; }
+          }));
+          this.board=view();
+          this.renderBoard();
+        }
+      }catch(e){ this.renderBoard('⚠️ Could not read the leaderboard from '+this.netLabel()+': '+((e && e.message)||e)); }
+      finally{ this._loading=null; }
+    })();
+    return this._loading;
+  },
+  renderBoard(err, loading){
+    const el=$('solBoard'); if(!el) return;
+    if(err){ el.innerHTML=`<div class="lb-empty">${esc(err)}</div>`; return; }
+    if(loading && !this.board.length){ el.innerHTML='<div class="lb-empty">⏳ Reading the leaderboard from Solana…</div>'; return; }
+    if(!this.board.length){ el.innerHTML=`<div class="lb-empty">No runs stamped on ${esc(this.netLabel())} yet. Be the first legend of the road!</div>`; return; }
+    const me=this.pubkey ? this.pubkey.toBase58() : '', medals=['🥇','🥈','🥉'];
+    const myIdx=me ? this.board.findIndex(r=>r.d.w===me) : -1;
+    el.innerHTML='<ul class="lb-list">'+this.board.slice(0,10).map((r,i)=>{
+      const v = r.verified===true ? ' <span class="vchk" title="The wallet that signed this transaction matches the rider wallet">✓ signed</span>' : (r.verified===false ? ' <span style="color:var(--danger);font-size:10px">unverified</span>' : '');
+      return `<li class="${r.d.w===me?'me':''}" title="${esc(r.d.h ? '📰 '+r.d.h : '')}"><span class="rk">${medals[i]||(i+1)}</span><span class="who"><b>${esc(r.d.n)}</b>${v}<small>${esc(this.short(r.d.w||'?'))} · 💥${esc(r.d.x)} · ${r.d.m==='mp'?'👥 room race':(r.d.r==='W'?'🏆 beat Gemma':'🤖 vs Gemma')}${r.t?' · '+this.ago(r.t):''}${r.d.h?' · 📰':''}</small></span><span class="sc">${esc(r.d.s)}<a href="${this.explorer('tx',r.sig)}" target="_blank" rel="noopener">tx ↗</a></span></li>`;
+    }).join('')+'</ul>'
+      + `<div class="lb-empty">${this.board.length} rider${this.board.length>1?'s':''} on-chain${myIdx>=10?' · you: #'+(myIdx+1):''} · hover a row for Gemma's headline</div>`;
+  },
+
+  init(){
+    try{ const p=JSON.parse(localStorage.getItem('abr_sol')||'{}'); if(p.cluster) this.cfg.cluster=p.cluster; if(p.rpc) this.cfg.rpc=p.rpc; this._pref=p; }catch(e){ this._pref={}; }
+    const qs=new URLSearchParams(location.search);
+    if(qs.get('cluster')) this.cfg.cluster=qs.get('cluster');
+    if(qs.get('rpc')){ this.cfg.cluster='custom'; this.cfg.rpc=qs.get('rpc'); }
+    $('walletBtn').onclick=()=>this.open();
+    $('startWalletBtn').onclick=()=>this.open();
+    $('startBoardBtn').onclick=()=>this.open();
+    $('sbBoardBtn').onclick=()=>this.open();
+    $('goBoardBtn').onclick=()=>this.open();
+    $('goRecordBtn').onclick=()=>this.recordRun();
+    $('solCloseBtn').onclick=()=>this.close();
+    $('solRefreshBtn').onclick=()=>this.loadBoard();
+    $('solAirdropBtn').onclick=()=>this.airdrop();
+    $('solDisconnectBtn').onclick=()=>this.disconnect();
+    $('solClusterSel').onchange=e=>this.setCluster(e.target.value);
+    $('solRpcInput').onchange=e=>{ this.cfg.rpc=e.target.value.trim(); this.setCluster('custom'); };
+    if(!this.ready()){ this.refreshWallet(); return; }
+    this.syncNetUI();
+    const p=this._pref||{};
+    if(p.kind==='burner') this.useBurner(true);
+    else if(p.kind==='injected' && p.wallet==='Phantom') setTimeout(()=>this.connectInjected('Phantom', true), 600);
+    this.refreshWallet();
+  },
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function loadSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem('abr_settings')||'{}');
+    if(s.provider){ STATE.provider=s.provider; $('providerSel').value=s.provider; }
+    if(s.ollamaUrl){ STATE.ollamaUrl=s.ollamaUrl; $('ollamaUrl').value=s.ollamaUrl; }
+    if(s.ollamaModel){ STATE.ollamaModel=s.ollamaModel; $('ollamaModel').value=s.ollamaModel; }
+    if(s.googleKey){ STATE.googleKey=s.googleKey; $('googleKey').value=s.googleKey; }
+    if(s.googleModel){ STATE.googleModel=s.googleModel; $('googleModelSel').value=s.googleModel; }
+    if(s.voice){ STATE.voice=s.voice; $('voiceSel').value=s.voice; }
+    if(s.uiLang){ STATE.uiLang=s.uiLang; $('uiLangSel').value=s.uiLang; }
+  }catch(e){}
+}
+
+// initial AI check
+// Pick an installed Gemma model automatically (avoids "model not found" at the venue)
+async function detectOllamaModel(){
+  try{
+    const r = await fetch(`${STATE.ollamaUrl}/api/tags`);
+    if(!r.ok) return;
+    const names = ((await r.json()).models||[]).map(m=>m.name);
+    if(names.includes(STATE.ollamaModel)) return;
+    const gem = names.filter(n=>/gemma/i.test(n));
+    const pickName = gem.find(n=>/1b|2b|e2b|4b/i.test(n)) || gem[0];
+    if(pickName){ STATE.ollamaModel = pickName; $('ollamaModel').value = pickName; toast('🦙 Using installed model: '+pickName); }
+    else toast('⚠️ No Gemma model in Ollama — run: ollama pull gemma3:1b');
+  }catch(e){}
+}
+async function initAi(){
+  updateAiPill();
+  if(STATE.provider!=='google') await detectOllamaModel();
+  const r = await aiGenerate('Reply with: OK', {max:5, temp:0.1});
+  if(r) toast('✅ Gemma AI online');
+  else toast('⚠️ AI offline — open Settings (⚙️) to configure');
+}
+
+window.addEventListener('load', ()=>{
+  resize();
+  loadSettings();
+  try{ $('playerName').value = localStorage.getItem('abr_name')||''; }catch(e){}
+  try{ $('publicUrl').value = localStorage.getItem('abr_public_url')||''; }catch(e){}
+  initAi();
+  SOL.init();
+  const joinParam = new URLSearchParams(location.search).get('join');
+  if(joinParam){ audioInit(); PEER.showJoin(joinParam.toUpperCase()); }
+  addCard('greet', '👋 Welcome to Amar Baper Rasta — AI Edition! Click START to ride. Configure AI in ⚙️ Settings (Ollama or Google AI Studio).', false, false);
+});
+resize();
+</script>
+</body>
+</html>
