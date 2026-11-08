@@ -2136,18 +2136,29 @@ const SOL = {
   async airdrop(){
     if(!this.pubkey) return;
     const btn=$('solAirdropBtn'); btn.disabled=true;
+    const a=this.pubkey.toBase58();
+    copyText(a).catch(()=>{});   // copy now, while the click still counts as a user gesture
     this.msg('🚰 Requesting 1 SOL from the '+esc(this.netLabel())+' faucet…');
     try{
       const sig = await this.conn().requestAirdrop(this.pubkey, solanaWeb3.LAMPORTS_PER_SOL);
       await this.waitConfirm(sig, 45);
       this.msg('✅ Airdrop landed. You can stamp runs now.');
     }catch(e){
-      const a=this.pubkey.toBase58();
-      copyText(a).catch(()=>{});
-      this.msg(`⚠️ The public faucet is rate-limited (${esc((e.message||String(e)).slice(0,90))}). Your address is copied: paste it at <a href="https://faucet.solana.com/" target="_blank" rel="noopener">faucet.solana.com</a> (choose Devnet), then come back.`);
+      const closed=/410|closed/i.test((e && e.message)||'');
+      this.msg(`⚠️ ${closed ? 'The RPC airdrop is closed on public devnet.' : 'The RPC airdrop is rate-limited right now.'} Get free devnet SOL at <a href="https://faucet.solana.com/" target="_blank" rel="noopener">faucet.solana.com</a> (Devnet, 1 SOL) with this address (copied): <div class="addr" style="font-family:'Courier New',monospace;color:var(--sol2);word-break:break-all;user-select:all;margin-top:4px">${a}</div><span style="color:var(--muted)">The balance updates here automatically once it arrives.</span>`);
+      this.watchBalance();
     }
     btn.disabled=!this.pubkey;
     this.refreshBalance();
+  },
+  // After sending the rider to the web faucet, poll the balance for a few minutes.
+  watchBalance(){
+    clearInterval(this._watch); let n=0;
+    this._watch=setInterval(async()=>{
+      n++; if(!this.pubkey || n>45){ clearInterval(this._watch); return; }
+      const before=this.balance; await this.refreshBalance();
+      if((this.balance||0)>0 && !(before>0)){ clearInterval(this._watch); this.msg('✅ Devnet SOL arrived. You can stamp runs now.'); toast('✅ Devnet SOL received'); }
+    }, 4000);
   },
 
   /* ---------- UI ---------- */
